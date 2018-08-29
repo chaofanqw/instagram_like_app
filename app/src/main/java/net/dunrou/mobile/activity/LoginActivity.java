@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -157,11 +158,13 @@ public class LoginActivity extends BaseActivity {
         } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
-            if (flag == 0) {
-                vertifcation(email, password);
-            }else{
-                register(email, password);
-            }
+//            if (flag == 0) {
+//                vertifcation(email, password);
+//            }else{
+//                register(email, password);
+//            }
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
         }
     }
 
