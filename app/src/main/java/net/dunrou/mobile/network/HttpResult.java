@@ -1,4 +1,4 @@
-package net.dunrou.mobile;
+package net.dunrou.mobile.network;
 
 /**
  * Created by Stephen on 2018/8/28.

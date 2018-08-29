@@ -1,4 +1,4 @@
-package net.dunrou.mobile;
+package net.dunrou.mobile.network;
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;

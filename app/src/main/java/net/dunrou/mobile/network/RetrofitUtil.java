@@ -1,4 +1,4 @@
-package net.dunrou.mobile;
+package net.dunrou.mobile.network;
 
 import io.reactivex.Observable;
 import io.reactivex.Observer;

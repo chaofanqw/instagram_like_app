@@ -1,25 +1,32 @@
-package net.dunrou.mobile;
+package net.dunrou.mobile.activity;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import net.dunrou.mobile.R;
+import net.dunrou.mobile.bean.BaseActivity;
+import net.dunrou.mobile.network.HttpResult;
+import net.dunrou.mobile.network.InsNetwork;
+import net.dunrou.mobile.network.InsService;
+import net.dunrou.mobile.network.RetrofitUtil;
 
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         TextView test = findViewById(R.id.test);
         test.setOnClickListener(this);
-
     }
 
     private void getMovie(){
