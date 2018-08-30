@@ -22,7 +22,7 @@ public class DataGenerator {
     public static final int []mTabResPressed = new int[]{R.drawable.home_p, R.drawable.search_p,
                                                             R.drawable.photo_p,R.drawable.message_p,
                                                             R.drawable.profile_p};
-    public static final String []mTabTitle = new String[]{"Home","Discover","Photo","Message","Profile"};
+    public static final String []mTabTitle = new String[]{"User Feed","Discover","Upload photo","Activity Feed","Profile"};
 
     public static Fragment[] getFragments(String from){
         Fragment fragments[] = new Fragment[5];

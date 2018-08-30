@@ -1,7 +1,10 @@
 package net.dunrou.mobile.network;
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import java.util.concurrent.TimeUnit;
+
+import io.reactivex.android.BuildConfig;
 import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -11,7 +14,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class InsService {
 
-    public static final String BASE_URL = "https://api.douban.com/v2/movie/";
+    public static final String BASE_URL = "http://115.146.85.189:8000/";
 
     private static final int DEFAULT_TIMEOUT = 5;
 
@@ -20,12 +23,17 @@ public class InsService {
 
     //构造方法私有
     private InsService() {
+        OkHttpClient httpClient = new OkHttpClient();
+        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+        httpClient = new OkHttpClient.Builder().addInterceptor(logging).build();
+
         //手动创建一个OkHttpClient并设置超时时间
         OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder();
         httpClientBuilder.connectTimeout(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
 
         retrofit = new Retrofit.Builder()
-                .client(httpClientBuilder.build())
+                .client(httpClient)
                 .addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .baseUrl(BASE_URL)
@@ -47,5 +55,6 @@ public class InsService {
     public InsNetwork getInsNetwork(){
         return insSeverice;
     }
+
 
 }

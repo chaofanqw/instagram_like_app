@@ -165,6 +165,7 @@ public class LoginActivity extends BaseActivity {
 //            }
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);
+//            test();
         }
     }
 
@@ -273,5 +274,37 @@ public class LoginActivity extends BaseActivity {
         RetrofitUtil.bind(login, deal);
     }
 
+    private void test(){
+        Observable login = InsService.getInstance().getInsNetwork().test(6919);
+
+        Observer<String> deal = new Observer<String>() {
+
+            @Override
+            public void onError(Throwable e) {
+                showProgress(false);
+                Log.d("result", "onError: " + e.getMessage());
+            }
+
+            @Override
+            public void onComplete() {
+//                Toast.makeText(LoginActivity.this, "Login Completed", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onSubscribe(Disposable d) {
+                showProgress(true);
+                Toast.makeText(LoginActivity.this, "fetch begin", Toast.LENGTH_SHORT).show();
+
+            }
+
+            @Override
+            public void onNext(String result) {
+                showProgress(false);
+                Log.d("result", "onNext: " + result);
+            }
+        };
+
+        RetrofitUtil.bind(login, deal);
+    }
 }
 
