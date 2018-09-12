@@ -19,7 +19,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
 
-    protected void openFragment(int layoutID, Fragment fragment){
+    public void openFragment(int layoutID, Fragment fragment){
         FragmentManager fm = getFragmentManager();
         FragmentTransaction transaction = fm.beginTransaction();
         transaction.replace(layoutID, fragment);

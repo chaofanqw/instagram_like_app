@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import net.dunrou.mobile.R;
 import net.dunrou.mobile.fragment.HomeFragment;
+import net.dunrou.mobile.fragment.PhotoFragment;
 
 /**
  * Created by Stephen on 2018/8/29.
@@ -28,7 +29,7 @@ public class DataGenerator {
         Fragment fragments[] = new Fragment[5];
         fragments[0] = HomeFragment.newInstance();
         fragments[1] = HomeFragment.newInstance();
-        fragments[2] = HomeFragment.newInstance();
+        fragments[2] = PhotoFragment.newInstance();
         fragments[3] = HomeFragment.newInstance();
         fragments[4] = HomeFragment.newInstance();
         return fragments;

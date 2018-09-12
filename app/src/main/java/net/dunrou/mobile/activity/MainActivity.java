@@ -1,6 +1,7 @@
 package net.dunrou.mobile.activity;
 
 import android.app.Fragment;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.util.Log;
@@ -104,6 +105,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         }
     }
 
+    public void onPhotoSuccess(){
+        mTabLayout.getTabAt(0).select();
+    }
+
 
     private void getMovie(){
         InsNetwork insNetwork = InsService.getInstance().getInsNetwork();
@@ -136,6 +141,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     @Override
     public void onClick(View view) {
-        getMovie();
+        Intent intent = new Intent(this, WxDemoActivity.class);
+        startActivity(intent);
     }
+
+
+
 }
