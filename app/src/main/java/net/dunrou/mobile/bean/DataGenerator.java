@@ -29,7 +29,7 @@ public class DataGenerator {
         Fragment fragments[] = new Fragment[5];
         fragments[0] = HomeFragment.newInstance();
         fragments[1] = HomeFragment.newInstance();
-        fragments[2] = PhotoFragment.newInstance();
+        fragments[2] = null;
         fragments[3] = HomeFragment.newInstance();
         fragments[4] = HomeFragment.newInstance();
         return fragments;

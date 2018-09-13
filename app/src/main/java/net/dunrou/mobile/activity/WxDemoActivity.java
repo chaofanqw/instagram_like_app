@@ -95,8 +95,8 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
         switch (position) {
             case IMAGE_ITEM_ADD:
                 List<String> names = new ArrayList<>();
-                names.add("拍照");
-                names.add("相册");
+                names.add("Take Photo");
+                names.add("Choose from Gallery");
                 showDialog(new SelectDialog.SelectDialogListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -172,5 +172,14 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
                 }
             }
         }
+    }
+
+    @Override
+    public void onBackPressed(){
+//        super.onBackPressed();
+        Intent data = new Intent();
+        data.putExtra(MainActivity.PHOTO_INFO, true);
+        setResult(RESULT_OK, data);
+        finish();
     }
 }

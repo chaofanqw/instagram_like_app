@@ -11,6 +11,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.lzy.imagepicker.ImagePicker;
+
 import net.dunrou.mobile.R;
 import net.dunrou.mobile.bean.BaseActivity;
 import net.dunrou.mobile.bean.DataGenerator;
@@ -24,6 +26,8 @@ import io.reactivex.disposables.Disposable;
 
 
 public class MainActivity extends BaseActivity implements View.OnClickListener {
+    public static final int PHOTO_TAKE = 10001;
+    public static final String PHOTO_INFO = "info";
 
     private TabLayout mTabLayout;
     private Fragment []mFragmensts;
@@ -39,6 +43,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
 //        TextView test = findViewById(R.id.test);
 //        test.setOnClickListener(this);
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
     }
 
     private void initView() {
@@ -102,6 +111,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         }
         if(fragment!=null) {
             openFragment(R.id.home_container,fragment);
+        }else{
+            if(position == 2){
+                Intent intent = new Intent(this, WxDemoActivity.class);
+                startActivityForResult(intent, PHOTO_TAKE);
+            }
         }
     }
 
@@ -141,10 +155,21 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     @Override
     public void onClick(View view) {
-        Intent intent = new Intent(this, WxDemoActivity.class);
-        startActivity(intent);
+//        Intent intent = new Intent(this, WxDemoActivity.class);
+//        startActivity(intent);
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK){
+            if(requestCode == PHOTO_TAKE){
+                if(data.getBooleanExtra(PHOTO_INFO, false)){
+                    onPhotoSuccess();
+                }
+            }
+        }
+    }
 
 
 }
