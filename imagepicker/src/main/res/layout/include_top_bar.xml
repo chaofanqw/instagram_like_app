@@ -48,7 +48,7 @@
         android:minWidth="48dp"
         android:paddingRight="16.0dp"
         android:paddingLeft="16.0dp"
-        android:text="完成(0/3)"
+        android:text="Complete"
         android:textColor="#ffffff"
         android:textSize="14sp" />
 

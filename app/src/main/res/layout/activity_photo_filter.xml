@@ -7,12 +7,14 @@
     tools:context="net.dunrou.mobile.activity.PhotoFilterActivity"
     android:background="@color/black">
 
+    <include layout="@layout/include_top_bar"/>
+
     <ImageView
         android:id="@+id/place_holder_imageview"
         android:layout_width="375dp"
         android:layout_height="375dp"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="80dp"
+        android:layout_marginTop="130dp"
         />
 
     <RelativeLayout
@@ -167,7 +169,7 @@
 
             <android.support.v7.widget.AppCompatSeekBar
                 android:id="@+id/brightness_progress"
-                android:layout_width="300dp"
+                android:layout_width="200dp"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="15dp"
                 android:maxHeight="3.0dp"
@@ -175,6 +177,20 @@
                 android:progressDrawable="@drawable/sb_bar"
                 android:layout_gravity="center"
                 android:thumbTint="@color/green"
+                android:max="100"
+                />
+
+            <TextView
+                android:id="@+id/brightness_done"
+                android:layout_width="60dp"
+                android:layout_height="30dp"
+                android:layout_marginLeft="15dp"
+                android:background="@drawable/round_rectangle"
+                android:text="DONE"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:layout_gravity="center"
+                android:gravity="center"
                 />
 
         </LinearLayout>
@@ -198,7 +214,7 @@
 
             <android.support.v7.widget.AppCompatSeekBar
                 android:id="@+id/contrast_progress"
-                android:layout_width="300dp"
+                android:layout_width="200dp"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="15dp"
                 android:maxHeight="3.0dp"
@@ -206,6 +222,20 @@
                 android:progressDrawable="@drawable/sb_bar"
                 android:layout_gravity="center"
                 android:thumbTint="@color/green"
+                android:max="100"
+                />
+
+            <TextView
+                android:id="@+id/contrast_done"
+                android:layout_width="60dp"
+                android:layout_height="30dp"
+                android:layout_marginLeft="15dp"
+                android:background="@drawable/round_rectangle"
+                android:text="DONE"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:layout_gravity="center"
+                android:gravity="center"
                 />
 
         </LinearLayout>

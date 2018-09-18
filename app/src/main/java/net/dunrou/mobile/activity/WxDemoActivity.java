@@ -39,6 +39,7 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
     public static final int IMAGE_ITEM_ADD = -1;
     public static final int REQUEST_CODE_SELECT = 100;
     public static final int REQUEST_CODE_PREVIEW = 101;
+    public static final int REQUEST_FILTER = 102;
 
     private ImagePickerAdapter adapter;
     private ArrayList<ImageItem> selImageList; //当前选择的所有图片
@@ -158,7 +159,7 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
                     Log.d("result", "onActivityResult: "+images.size());
                     Intent intent = new Intent(this, PhotoFilterActivity.class);
                     intent.putExtra("photo", images.get(0).path);
-                    startActivity(intent);
+                    startActivityForResult(intent, REQUEST_FILTER);
 //                    selImageList.addAll(images);
 //                    adapter.setImages(selImageList);
                 }
@@ -170,6 +171,15 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
                 if (images != null) {
                     Log.d("result", "onActivityResult: "+images.size());
                     selImageList.clear();
+                    selImageList.addAll(images);
+                    adapter.setImages(selImageList);
+                }
+            }
+        } else if (resultCode == PhotoFilterActivity.FILTER_DONE){
+            if (data != null && requestCode == REQUEST_FILTER){
+                images = (ArrayList<ImageItem>) data.getSerializableExtra(ImagePicker.EXTRA_IMAGE_ITEMS);
+                if (images != null) {
+                    Log.d("result", "onActivityResult: "+images.size());
                     selImageList.addAll(images);
                     adapter.setImages(selImageList);
                 }
