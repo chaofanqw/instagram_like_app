@@ -19,6 +19,8 @@ android {
     }
     packagingOptions {
         exclude 'META-INF/rxjava.properties'
+        doNotStrip '*/mips/*.so'
+        doNotStrip '*/mips64/*.so'
     }
     greendao {
         schemaVersion 1
@@ -61,11 +63,15 @@ dependencies {
     compile 'com.zhy:mpermission-api:1.0.0'
 
     compile project(':imagepicker')
+    compile 'com.github.zomato:androidphotofilters:1.0.1'
 
     implementation 'com.squareup.picasso:picasso:2.5.2'
-
     compile 'com.github.bumptech.glide:glide:3.7.0'
 
+    implementation 'com.jakewharton:butterknife:8.8.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
+
+    compile 'de.hdodenhof:circleimageview:2.0.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

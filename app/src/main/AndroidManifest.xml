@@ -16,8 +16,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/generalnotitle">
-        <activity android:name=".activity.MainActivity">
-        </activity>
+        <activity android:name=".activity.MainActivity"></activity>
         <activity
             android:name=".activity.LoginActivity"
             android:label="@string/title_activity_login">
@@ -27,12 +26,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".activity.WxDemoActivity"
-            />
+        <activity android:name=".activity.WxDemoActivity" />
+        <activity android:name=".activity.PhotoFilterActivity"></activity>
     </application>
-
-
 
 </manifest>

@@ -8,4 +8,6 @@
     <color name="backgroundLight">#10000000</color>
     <color name="backgroundNone">#00000000</color>
     <color name="white">#ffffff</color>
+    <color name="black">#000000</color>
+    <color name="green">#47ac01</color>
 </resources>

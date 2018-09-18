@@ -156,8 +156,11 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
                 images = (ArrayList<ImageItem>) data.getSerializableExtra(ImagePicker.EXTRA_RESULT_ITEMS);
                 if (images != null) {
                     Log.d("result", "onActivityResult: "+images.size());
-                    selImageList.addAll(images);
-                    adapter.setImages(selImageList);
+                    Intent intent = new Intent(this, PhotoFilterActivity.class);
+                    intent.putExtra("photo", images.get(0).path);
+                    startActivity(intent);
+//                    selImageList.addAll(images);
+//                    adapter.setImages(selImageList);
                 }
             }
         } else if (resultCode == ImagePicker.RESULT_CODE_BACK) {
