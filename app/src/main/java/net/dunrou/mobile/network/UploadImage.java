@@ -13,6 +13,10 @@ import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import net.dunrou.mobile.base.UploadMessage;
+
+import org.greenrobot.eventbus.EventBus;
+
 import java.io.File;
 
 /**
@@ -55,6 +59,7 @@ public class UploadImage {
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
+                EventBus.getDefault().post(new UploadMessage(false, ""));
                 // Handle unsuccessful uploads
             }
         }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -67,12 +72,15 @@ public class UploadImage {
                     public void onSuccess(Uri uri) {
                         // Got the download URL for 'users/me/profile.png'
                         Log.d("firebase", "onSuccess: "+uri);
+                        EventBus.getDefault().post(new UploadMessage(true, uri.getPath()));
                     }
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception exception) {
                         // Handle any errors
                         Log.d("firebase", "onFailure: error");
+                        EventBus.getDefault().post(new UploadMessage(false, ""));
+
                     }
                 });
             }

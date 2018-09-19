@@ -9,7 +9,9 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Toast;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.lzy.imagepicker.ImagePicker;
 import com.lzy.imagepicker.bean.ImageItem;
 import com.lzy.imagepicker.ui.ImageGridActivity;
@@ -17,17 +19,23 @@ import com.lzy.imagepicker.ui.ImagePreviewDelActivity;
 import com.lzy.imagepicker.view.CropImageView;
 
 
+import net.dunrou.mobile.base.UploadMessage;
 import net.dunrou.mobile.bean.FileProviderUtils;
 import net.dunrou.mobile.bean.GlideImageLoader;
 import net.dunrou.mobile.bean.ImagePickerAdapter;
 import net.dunrou.mobile.bean.SelectDialog;
 
 import java.io.File;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
 import net.dunrou.mobile.R;
 import net.dunrou.mobile.network.UploadImage;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -51,16 +59,27 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
     private ImagePickerAdapter adapter;
     private ArrayList<ImageItem> selImageList; //当前选择的所有图片
     private int maxImgCount = 8;               //允许选择图片最大数
+    private MaterialDialog materialDialog;
+    private MessageFormat messageFormat;
+    private int uploadNumber;
+    private ArrayList<String> paths = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wxdemo);
         ButterKnife.bind(this);
+        EventBus.getDefault().register(this);
 
         //最好放到 Application oncreate执行
         initImagePicker();
         initWidget();
+    }
+
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
     }
 
     private void initImagePicker() {
@@ -140,8 +159,6 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
 
                     }
                 }, names);
-
-
                 break;
             default:
                 //打开预览
@@ -207,9 +224,17 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
     @OnClick(R.id.btn_publish)
     public void publishImages(){
         if(images != null){
-            for(ImageItem imageItem: images){
+            for(ImageItem imageItem: selImageList){
                 new UploadImage().upload(FileProviderUtils.uriFromFile(this, new File(imageItem.path)));
             }
+
+            uploadNumber = 0;
+            messageFormat = new MessageFormat("Uploading {0} of {1} images.");
+            materialDialog = new MaterialDialog.Builder(this)
+                                .title("Uploading Images")
+                                .content(messageFormat.format(new Object[]{uploadNumber,selImageList.size()}))
+                                .progress(true, 0)
+                                .show();
         }
     }
 
@@ -218,6 +243,24 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
         this.onBackPressed();
     }
 
-
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onUploadMessage(UploadMessage uploadMessage){
+        if (uploadMessage.isSuccess()) {
+            uploadNumber++;
+            paths.add(uploadMessage.getPath());
+            if(uploadNumber == selImageList.size()){
+//                materialDialog.hide();
+//                this.onBackPressed();
+                materialDialog.setContent("Uploading the message.");
+            }else {
+                materialDialog.setContent(messageFormat.format(new Object[]{uploadNumber, selImageList.size()}));
+            }
+        }
+        else {
+            paths = new ArrayList<>();
+            materialDialog.hide();
+            Toast.makeText(this, "Something wrong when uploading", Toast.LENGTH_SHORT).show();
+        }
+    }
 
 }
