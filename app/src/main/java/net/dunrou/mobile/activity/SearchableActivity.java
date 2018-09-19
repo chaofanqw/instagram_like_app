@@ -1,4 +1,4 @@
-package net.dunrou.mobile.activity;//package net.dunrou.mobile.activity;
+//package net.dunrou.mobile.activity;//package net.dunrou.mobile.activity;
 //
 //import android.app.Activity;
 //import android.app.SearchManager;
