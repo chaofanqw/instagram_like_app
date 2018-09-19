@@ -2,6 +2,7 @@ package net.dunrou.mobile.network;
 
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -32,11 +33,12 @@ public class UploadImage {
 
         // Create the file metadata
         StorageMetadata metadata = new StorageMetadata.Builder()
-                .setContentType("image/jpeg")
+                .setContentType("image/png")
                 .build();
 
         // Upload file and metadata to the path 'images/mountains.jpg'
-        UploadTask uploadTask = storageReference.child("images/" + file.getLastPathSegment()).putFile(file, metadata);
+        final StorageReference pathReference = storageReference.child("images/" + file.getLastPathSegment());
+        UploadTask uploadTask = pathReference.putFile(file, metadata);
 
         // Listen for state changes, errors, and completion of the upload.
         uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
@@ -60,7 +62,19 @@ public class UploadImage {
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 // Handle successful uploads on complete
                 // ...
-                storageReference.getDownloadUrl();
+                pathReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        // Got the download URL for 'users/me/profile.png'
+                        Log.d("firebase", "onSuccess: "+uri);
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception exception) {
+                        // Handle any errors
+                        Log.d("firebase", "onFailure: error");
+                    }
+                });
             }
         });
     }
