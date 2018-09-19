@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <SearchView
+        android:id="@+id/search_SV"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:closeIcon="@android:drawable/presence_offline" />
+
+    <android.support.design.widget.TabLayout
+        android:id="@+id/discoverNavBar_TL"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+
+        <android.support.design.widget.TabItem
+            android:id="@+id/top_TI"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Top" />
+
+        <android.support.design.widget.TabItem
+            android:id="@+id/people_TI"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="People" />
+
+        <android.support.design.widget.TabItem
+            android:id="@+id/nearby_TI"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nearby" />
+
+    </android.support.design.widget.TabLayout>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/results_RV"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>

@@ -22,4 +22,8 @@
     <string name="share_the_moment">Share the moment.</string>
     <string name="publish">Publish</string>
     <string name="access_location">Location</string>
+
+    <string name="app_label">app_label</string>
+    <string name="search_hint">Search</string>
+
 </resources>
