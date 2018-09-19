@@ -1,6 +1,7 @@
 package net.dunrou.mobile.activity;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
@@ -16,14 +17,20 @@ import com.lzy.imagepicker.ui.ImagePreviewDelActivity;
 import com.lzy.imagepicker.view.CropImageView;
 
 
+import net.dunrou.mobile.bean.FileProviderUtils;
 import net.dunrou.mobile.bean.GlideImageLoader;
 import net.dunrou.mobile.bean.ImagePickerAdapter;
 import net.dunrou.mobile.bean.SelectDialog;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import net.dunrou.mobile.R;
+import net.dunrou.mobile.network.UploadImage;
+
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 /**
  * ================================================
@@ -49,6 +56,7 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wxdemo);
+        ButterKnife.bind(this);
 
         //最好放到 Application oncreate执行
         initImagePicker();
@@ -195,4 +203,21 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
         setResult(RESULT_OK, data);
         finish();
     }
+
+    @OnClick(R.id.btn_publish)
+    public void publishImages(){
+        if(images != null){
+            for(ImageItem imageItem: images){
+                new UploadImage().upload(FileProviderUtils.uriFromFile(this, new File(imageItem.path)));
+            }
+        }
+    }
+
+    @OnClick(R.id.btn_back)
+    public void onBack(){
+        this.onBackPressed();
+    }
+
+
+
 }
