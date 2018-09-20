@@ -19,13 +19,17 @@ import java.util.Map;
  */
 
 public class FirebaseEventPost {
+    private String eventPostId;
     private String userId;
     private String comment;
     private List<String> photos;
     private Location location;
     private Date time;
 
-    public FirebaseEventPost(String userId, String comment, List<String> photos, Location location, Date time){
+    public FirebaseEventPost(){}
+
+    public FirebaseEventPost(String eventPostId, String userId, String comment, List<String> photos, Location location, Date time){
+        this.eventPostId = eventPostId;
         this.userId = userId;
         this.comment = comment;
         this.photos = photos;
@@ -33,11 +37,12 @@ public class FirebaseEventPost {
         this.time = time;
     }
 
-    public FirebaseEventPost(String userId, String comment, String photos, String location, String time){
-        Gson gson = new Gson();
+    public FirebaseEventPost(String eventPostId, String userId, String comment, String photos, String location, String time){
+        this.eventPostId = eventPostId;
         this.userId = userId;
         this.comment = comment;
 
+        Gson gson = new Gson();
         Type typeOfT = TypeToken.getParameterized(List.class, String.class).getType();
         this.photos = gson.fromJson(photos,typeOfT);
 
@@ -52,51 +57,10 @@ public class FirebaseEventPost {
         this.time = gson.fromJson(time, Date.class);
     }
 
-    public FirebaseEventPost(){}
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public List<String> getPhotos() {
-        return photos;
-    }
-
-    public void setPhotos(List<String> photos) {
-        this.photos = photos;
-    }
-
-    public Location getLocation() {
-        return location;
-    }
-
-    public void setLocation(Location location) {
-        this.location = location;
-    }
-
-    public Date getTime() {
-        return time;
-    }
-
-    public void setTime(Date time) {
-        this.time = time;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
     public Map<String, Object> toMap(){
         Gson gson = new Gson();
         HashMap<String, Object> result = new HashMap<>();
+        result.put("eventPostId", eventPostId);
         result.put("userId", userId);
         result.put("comment", comment);
         result.put("photos", gson.toJson(photos));
@@ -115,4 +79,42 @@ public class FirebaseEventPost {
 
         return result;
     }
+
+    public String getEventPostId() {
+        return eventPostId;
+    }
+    public void setEventPostId(String eventPostId) {
+        this.eventPostId = eventPostId;
+    }
+    public String getUserId() {
+        return userId;
+    }
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+    public List<String> getPhotos() {
+        return photos;
+    }
+    public void setPhotos(List<String> photos) {
+        this.photos = photos;
+    }
+    public Location getLocation() {
+        return location;
+    }
+    public void setLocation(Location location) {
+        this.location = location;
+    }
+    public Date getTime() {
+        return time;
+    }
+    public void setTime(Date time) {
+        this.time = time;
+    }
+    public String getComment() {
+        return comment;
+    }
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
 }

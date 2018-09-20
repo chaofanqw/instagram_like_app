@@ -13,6 +13,8 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import net.dunrou.mobile.base.firebaseClass.FirebaseEventPost;
+import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
+import net.dunrou.mobile.base.message.LoginMessage;
 import net.dunrou.mobile.base.message.UploadDatabaseMessage;
 
 import org.greenrobot.eventbus.EventBus;
@@ -35,13 +37,14 @@ public class FirebaseUtil {
 
         String key = myRef.child("event-post").push().getKey();
         Map<String, Object> childUpdates = new HashMap<>();
+
+        firebaseEventPost.setEventPostId(key);
         childUpdates.put("/event-post/"+key, firebaseEventPost.toMap());
+
         myRef.updateChildren(childUpdates)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        // Write was successful!
-                        // ...
                         Log.d("message", "onSuccess: ");
                         EventBus.getDefault().post(new UploadDatabaseMessage(true));
                     }
@@ -49,12 +52,10 @@ public class FirebaseUtil {
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        // Write failed
-                        // ...
                         Log.d("message", "onFailure: ");
                         EventBus.getDefault().post(new UploadDatabaseMessage(false));
                     }
-                });;
+                });
     }
 
     public void getEventPost(){
@@ -72,6 +73,7 @@ public class FirebaseUtil {
                     HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
 
                     FirebaseEventPost data = new FirebaseEventPost(
+                            (String) result.get("eventPostId"),
                             (String) result.get("userId"),
                             (String) result.get("comment"),
                             (String) result.get("photos"),
@@ -89,6 +91,60 @@ public class FirebaseUtil {
         });
     }
 
+    public void UserInsert(final FirebaseUser firebaseUser){
 
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("user");
 
+        String key = myRef.push().getKey();
+        Map<String, Object> childUpdates = new HashMap<>();
+        childUpdates.put("/" + key, firebaseUser.toMap());
+
+        myRef.updateChildren( childUpdates)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        EventBus.getDefault().post(new LoginMessage(true, firebaseUser.getUserID()));
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        EventBus.getDefault().post(new LoginMessage(false,""));
+                    }
+                });
+    }
+
+    public void getUser(final FirebaseUser firebaseUser){
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("user");
+
+        Query query = myRef.orderByChild("userID").equalTo(firebaseUser.getUserID());
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Iterator<DataSnapshot> set = dataSnapshot.getChildren().iterator();
+
+                if(set.hasNext()){
+                    Log.d("result", "onDataChange: ");
+                    DataSnapshot tempDataSnapshot = set.next();
+                    HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
+
+                    if(((String)result.get("password"))
+                            .equals(firebaseUser.getPassword())){
+                        EventBus.getDefault().post(new LoginMessage(true, firebaseUser.getUserID()));
+                    }else{
+                        EventBus.getDefault().post(new LoginMessage(false, ""));
+                    }
+                }else{
+                    EventBus.getDefault().post(new LoginMessage(false, ""));
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d("result", "onCancelled: error");
+            }
+        });
+    }
 }

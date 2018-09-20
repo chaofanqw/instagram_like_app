@@ -1,5 +1,8 @@
 package net.dunrou.mobile.base.firebaseClass;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,6 +12,7 @@ import java.util.Map;
  */
 
 public class FirebaseEventLike {
+    private String eventLikeId;
     private String eventPostId;
     private String userId;
     private Date time;
@@ -24,6 +28,37 @@ public class FirebaseEventLike {
     public FirebaseEventLike() {
     }
 
+    public FirebaseEventLike(String eventLikeId, String eventPostId, String userId, String time,
+                             String status) {
+        this.eventLikeId = eventLikeId;
+        this.eventPostId = eventPostId;
+        this.userId = userId;
+
+        Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").create();
+        this.time = gson.fromJson(time, Date.class);
+
+        this.status = Boolean.parseBoolean(status);
+    }
+
+    public Map<String, Object> toMap(){
+        HashMap<String, Object> result = new HashMap<>();
+        result.put("eventLikeId", eventLikeId);
+        result.put("eventPostId", eventPostId);
+        result.put("userId", userId);
+
+        Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").create();
+        result.put("time", gson.toJson(time));
+
+        result.put("status", String.valueOf(status));
+        return result;
+    }
+
+    public String getEventLikeId() {
+        return eventLikeId;
+    }
+    public void setEventLikeId(String eventLikeId) {
+        this.eventLikeId = eventLikeId;
+    }
     public String getEventPostId() {
         return this.eventPostId;
     }
@@ -49,14 +84,4 @@ public class FirebaseEventLike {
         this.status = status;
     }
 
-    public Map<String, Object> toMap(){
-        HashMap<String, Object> result = new HashMap<>();
-
-        result.put("eventPostId", eventPostId);
-        result.put("userId", userId);
-        result.put("time", time);
-        result.put("status", status);
-
-        return result;
-    }
 }

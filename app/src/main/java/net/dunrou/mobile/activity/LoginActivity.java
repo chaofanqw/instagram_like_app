@@ -21,12 +21,21 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.MaterialDialog;
+
 import net.dunrou.mobile.R;
+import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
+import net.dunrou.mobile.base.message.LoginMessage;
 import net.dunrou.mobile.bean.BaseActivity;
 import net.dunrou.mobile.network.HttpResult;
 import net.dunrou.mobile.network.InsNetwork;
 import net.dunrou.mobile.network.InsService;
 import net.dunrou.mobile.network.RetrofitUtil;
+import net.dunrou.mobile.network.firebaseNetwork.FirebaseUtil;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import io.reactivex.Observable;
 import io.reactivex.Observer;
@@ -54,6 +63,7 @@ public class LoginActivity extends BaseActivity {
     private TextView mRegisterView;
 
     private View mLoginOrRegisterView;
+    private MaterialDialog materialDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +106,14 @@ public class LoginActivity extends BaseActivity {
         mProgressView = findViewById(R.id.login_progress);
         mSignupView = findViewById(R.id.signup_switch);
         mRegisterView = findViewById(R.id.register_switch);
+
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
     }
 
     private void loginOrRegister(){
@@ -158,14 +176,11 @@ public class LoginActivity extends BaseActivity {
         } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
-//            if (flag == 0) {
-//                vertifcation(email, password);
-//            }else{
-//                register(email, password);
-//            }
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
-//            test();
+            if (flag == 0) {
+                vertifcation(email, password);
+            }else{
+                register(email, password);
+            }
         }
     }
 
@@ -207,104 +222,35 @@ public class LoginActivity extends BaseActivity {
     }
 
     private void vertifcation(String email, String password){
+        materialDialog = new  MaterialDialog.Builder(this)
+                .title("Registering account")
+                .content("Please wait for a moment")
+                .progress(true, 0)
+                .show();
+        new FirebaseUtil().getUser(new FirebaseUser(email, password));
 
-        Observable login = InsService.getInstance().getInsNetwork().login(email, password);
-
-        Observer<HttpResult<String>> deal = new Observer<HttpResult<String>>() {
-
-            @Override
-            public void onError(Throwable e) {
-                showProgress(false);
-                Log.d("result", "onError: " + e.getMessage());
-            }
-
-            @Override
-            public void onComplete() {
-//                Toast.makeText(LoginActivity.this, "Login Completed", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onSubscribe(Disposable d) {
-                showProgress(true);
-                Toast.makeText(LoginActivity.this, "Login begin", Toast.LENGTH_SHORT).show();
-
-            }
-
-            @Override
-            public void onNext(HttpResult<String> result) {
-                showProgress(false);
-                Log.d("result", "onNext: " + result.getResultCode());
-            }
-        };
-
-        RetrofitUtil.bind(login, deal);
     }
 
     private void register(String email, String password){
+        materialDialog = new  MaterialDialog.Builder(this)
+                .title("Registering account")
+                .content("Please wait for a moment")
+                .progress(true, 0)
+                .show();
 
-        Observable login = InsService.getInstance().getInsNetwork().register(email, password);
-
-        Observer<HttpResult<String>> deal = new Observer<HttpResult<String>>() {
-
-            @Override
-            public void onError(Throwable e) {
-                showProgress(false);
-                Log.d("result", "onError: " + e.getMessage());
-            }
-
-            @Override
-            public void onComplete() {
-//                Toast.makeText(LoginActivity.this, "Login Completed", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onSubscribe(Disposable d) {
-                showProgress(true);
-                Toast.makeText(LoginActivity.this, "Sign up begin", Toast.LENGTH_SHORT).show();
-
-            }
-
-            @Override
-            public void onNext(HttpResult<String> result) {
-                showProgress(false);
-                Log.d("result", "onNext: " + result.getResultCode());
-            }
-        };
-
-        RetrofitUtil.bind(login, deal);
+        new FirebaseUtil().UserInsert(new FirebaseUser(email, password));
     }
 
-    private void test(){
-        Observable login = InsService.getInstance().getInsNetwork().test(6919);
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onLoginMessage(LoginMessage loginMessage){
+        materialDialog.dismiss();
 
-        Observer<String> deal = new Observer<String>() {
-
-            @Override
-            public void onError(Throwable e) {
-                showProgress(false);
-                Log.d("result", "onError: " + e.getMessage());
-            }
-
-            @Override
-            public void onComplete() {
-//                Toast.makeText(LoginActivity.this, "Login Completed", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onSubscribe(Disposable d) {
-                showProgress(true);
-                Toast.makeText(LoginActivity.this, "fetch begin", Toast.LENGTH_SHORT).show();
-
-            }
-
-            @Override
-            public void onNext(String result) {
-                showProgress(false);
-                Log.d("result", "onNext: " + result);
-            }
-        };
-
-        RetrofitUtil.bind(login, deal);
+        if(loginMessage.isSuccess()){
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
+        }else{
+            Toast.makeText(this, "Something wrong!", Toast.LENGTH_SHORT).show();
+        }
     }
 }
 
