@@ -1,6 +1,8 @@
 package net.dunrou.mobile.activity;
 
+import android.Manifest;
 import android.content.Intent;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -9,6 +11,8 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -17,9 +21,13 @@ import com.lzy.imagepicker.bean.ImageItem;
 import com.lzy.imagepicker.ui.ImageGridActivity;
 import com.lzy.imagepicker.ui.ImagePreviewDelActivity;
 import com.lzy.imagepicker.view.CropImageView;
+import com.zhy.m.permission.MPermissions;
+import com.zhy.m.permission.PermissionDenied;
+import com.zhy.m.permission.PermissionGrant;
 
-
-import net.dunrou.mobile.base.UploadMessage;
+import net.dunrou.mobile.base.message.UploadDatabaseMessage;
+import net.dunrou.mobile.base.message.UploadMessage;
+import net.dunrou.mobile.base.firebaseClass.FirebaseEventPost;
 import net.dunrou.mobile.bean.FileProviderUtils;
 import net.dunrou.mobile.bean.GlideImageLoader;
 import net.dunrou.mobile.bean.ImagePickerAdapter;
@@ -28,17 +36,24 @@ import net.dunrou.mobile.bean.SelectDialog;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import net.dunrou.mobile.R;
-import net.dunrou.mobile.network.UploadImage;
+import net.dunrou.mobile.network.firebaseNetwork.FirebaseUtil;
+import net.dunrou.mobile.network.firebaseNetwork.UploadImage;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.nlopez.smartlocation.OnLocationUpdatedListener;
+import io.nlopez.smartlocation.SmartLocation;
+import io.nlopez.smartlocation.location.providers.LocationGooglePlayServicesProvider;
 
 /**
  * ================================================
@@ -55,6 +70,7 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
     public static final int REQUEST_CODE_SELECT = 100;
     public static final int REQUEST_CODE_PREVIEW = 101;
     public static final int REQUEST_FILTER = 102;
+    public static final int REQUEST_LOCATION = 103;
 
     private ImagePickerAdapter adapter;
     private ArrayList<ImageItem> selImageList; //当前选择的所有图片
@@ -62,7 +78,13 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
     private MaterialDialog materialDialog;
     private MessageFormat messageFormat;
     private int uploadNumber;
-    private ArrayList<String> paths = new ArrayList<>();
+    private ArrayList<Uri> paths = new ArrayList<>();
+    private Location location = null;
+
+    @BindView(R.id.location)
+    TextView locationView;
+    @BindView(R.id.information_text)
+    EditText informationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -223,7 +245,7 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
 
     @OnClick(R.id.btn_publish)
     public void publishImages(){
-        if(images != null){
+        if(selImageList != null && selImageList.size() != 0){
             for(ImageItem imageItem: selImageList){
                 new UploadImage().upload(FileProviderUtils.uriFromFile(this, new File(imageItem.path)));
             }
@@ -235,6 +257,8 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
                                 .content(messageFormat.format(new Object[]{uploadNumber,selImageList.size()}))
                                 .progress(true, 0)
                                 .show();
+        }else{
+            Toast.makeText(this, "Please select at least one image.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -252,6 +276,7 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
 //                materialDialog.hide();
 //                this.onBackPressed();
                 materialDialog.setContent("Uploading the message.");
+                publishMessage();
             }else {
                 materialDialog.setContent(messageFormat.format(new Object[]{uploadNumber, selImageList.size()}));
             }
@@ -263,4 +288,55 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
         }
     }
 
+    private void publishMessage(){
+        String information = informationView.getText().toString();
+        Date date = Calendar.getInstance().getTime();
+        FirebaseEventPost firebaseEventPost = new FirebaseEventPost("1", information, paths, location, date);
+        new FirebaseUtil().EventPostInsert(firebaseEventPost);
+    }
+
+    @OnClick(R.id.geo_locate)
+    public void getLocation(){
+        MPermissions.requestPermissions(this, REQUEST_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION);
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
+    {
+        MPermissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @PermissionGrant(REQUEST_LOCATION)
+    public void requestSdcardSuccess()
+    {
+        SmartLocation.with(this)
+                .location(new LocationGooglePlayServicesProvider())
+                .oneFix()
+                .start(new OnLocationUpdatedListener() {
+                    @Override
+                    public void onLocationUpdated(Location mlocation) {
+                        location = mlocation;
+                        locationView.setText("Longitude:\t" + mlocation.getLongitude()+" Latitude:\t"+mlocation.getLatitude());
+                    }});
+    }
+
+    @PermissionDenied(REQUEST_LOCATION)
+    public void requestSdcardFailed()
+    {
+        Toast.makeText(this, "Cannot get access to location!", Toast.LENGTH_SHORT).show();
+    }
+
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onUploadDatabaseMessage(UploadDatabaseMessage uploadDatabaseMessage){
+        if(uploadDatabaseMessage.isSuccess()){
+            materialDialog.hide();
+            this.onBackPressed();
+        }else{
+            materialDialog.hide();
+            Toast.makeText(this, "Some thing wrong!", Toast.LENGTH_SHORT).show();
+        }
+    }
 }

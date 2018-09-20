@@ -1,6 +1,6 @@
-package net.dunrou.mobile.base;
+package net.dunrou.mobile.base.message;
 
-import net.dunrou.mobile.network.UploadImage;
+import android.net.Uri;
 
 /**
  * Created by Stephen on 2018/9/19.
@@ -8,9 +8,9 @@ import net.dunrou.mobile.network.UploadImage;
 
 public class UploadMessage {
     private boolean success;
-    private String path;
+    private Uri path;
 
-    public UploadMessage(boolean success, String path){
+    public UploadMessage(boolean success, Uri path){
         this.success = success;
         this.path = path;
     }
@@ -24,11 +24,11 @@ public class UploadMessage {
         this.success = success;
     }
 
-    public String getPath() {
+    public Uri getPath() {
         return path;
     }
 
-    public void setPath(String path) {
+    public void setPath(Uri path) {
         this.path = path;
     }
 }
