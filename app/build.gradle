@@ -71,6 +71,8 @@ dependencies {
     implementation 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
 
+    implementation 'de.hdodenhof:circleimageview:2.2.0'
+
     compile 'de.hdodenhof:circleimageview:2.0.0'
 }
 
