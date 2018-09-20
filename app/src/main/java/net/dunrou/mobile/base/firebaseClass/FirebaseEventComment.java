@@ -1,5 +1,8 @@
 package net.dunrou.mobile.base.firebaseClass;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,22 +12,54 @@ import java.util.Map;
  */
 
 public class FirebaseEventComment {
+    private String eventCommentId;
     private String userId;
     private Long eventPostId;
     private String comment;
     private Date time;
 
-    public FirebaseEventComment(String userId, Long eventPostId,
+    public FirebaseEventComment() {
+    }
+
+    public FirebaseEventComment(String eventCommentId, String userId, Long eventPostId,
                         String comment, Date time) {
+        this.eventCommentId = eventCommentId;
         this.userId = userId;
         this.eventPostId = eventPostId;
         this.comment = comment;
         this.time = time;
     }
 
-    public FirebaseEventComment() {
+    public FirebaseEventComment(String eventCommentId, String userId, String eventPostId,
+                                String comment, String time) {
+
+        this.eventCommentId = eventCommentId;
+        this.userId = userId;
+        this.eventPostId = Long.parseLong(eventPostId);
+        this.comment = comment;
+
+        Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").create();
+        this.time = gson.fromJson(time, Date.class);
     }
 
+    public Map<String, Object> toMap(){
+        HashMap<String, Object> result = new HashMap<>();
+        result.put("eventCommentId", eventCommentId);
+        result.put("userID", userId);
+        result.put("eventPostId", eventPostId);
+        result.put("comment", comment);
+
+        Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").create();
+        result.put("time", time);
+        return result;
+    }
+
+    public String getEventCommentId() {
+        return eventCommentId;
+    }
+    public void setEventCommentId(String eventCommentId) {
+        this.eventCommentId = eventCommentId;
+    }
     public String getUserId() {
         return this.userId;
     }
@@ -50,13 +85,4 @@ public class FirebaseEventComment {
         this.time = time;
     }
 
-
-    public Map<String, Object> toMap(){
-        HashMap<String, Object> result = new HashMap<>();
-        result.put("userID", userId);
-        result.put("eventPostId", eventPostId);
-        result.put("comment", comment);
-        result.put("time", time);
-        return result;
-    }
 }
