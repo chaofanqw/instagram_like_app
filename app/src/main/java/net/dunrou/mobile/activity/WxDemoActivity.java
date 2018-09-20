@@ -78,7 +78,7 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
     private MaterialDialog materialDialog;
     private MessageFormat messageFormat;
     private int uploadNumber;
-    private ArrayList<Uri> paths = new ArrayList<>();
+    private ArrayList<String> paths = new ArrayList<>();
     private Location location = null;
 
     @BindView(R.id.location)
@@ -271,7 +271,7 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
     public void onUploadMessage(UploadMessage uploadMessage){
         if (uploadMessage.isSuccess()) {
             uploadNumber++;
-            paths.add(uploadMessage.getPath());
+            paths.add(uploadMessage.getPath().toString());
             if(uploadNumber == selImageList.size()){
 //                materialDialog.hide();
 //                this.onBackPressed();
@@ -283,7 +283,7 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
         }
         else {
             paths = new ArrayList<>();
-            materialDialog.hide();
+            materialDialog.dismiss();
             Toast.makeText(this, "Something wrong when uploading", Toast.LENGTH_SHORT).show();
         }
     }
@@ -332,10 +332,10 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onUploadDatabaseMessage(UploadDatabaseMessage uploadDatabaseMessage){
         if(uploadDatabaseMessage.isSuccess()){
-            materialDialog.hide();
+            materialDialog.dismiss();
             this.onBackPressed();
         }else{
-            materialDialog.hide();
+            materialDialog.dismiss();
             Toast.makeText(this, "Some thing wrong!", Toast.LENGTH_SHORT).show();
         }
     }

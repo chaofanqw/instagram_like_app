@@ -57,6 +57,7 @@ public class UploadImage {
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
+                exception.printStackTrace();
                 EventBus.getDefault().post(new UploadMessage(false, null));
                 // Handle unsuccessful uploads
             }

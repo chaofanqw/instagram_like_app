@@ -4,9 +4,11 @@ import android.location.Location;
 import android.net.Uri;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -19,11 +21,11 @@ import java.util.Map;
 public class FirebaseEventPost {
     private String userId;
     private String comment;
-    private List<Uri> photos;
+    private List<String> photos;
     private Location location;
     private Date time;
 
-    public FirebaseEventPost(String userId, String comment, List<Uri> photos, Location location, Date time){
+    public FirebaseEventPost(String userId, String comment, List<String> photos, Location location, Date time){
         this.userId = userId;
         this.comment = comment;
         this.photos = photos;
@@ -35,14 +37,22 @@ public class FirebaseEventPost {
         Gson gson = new Gson();
         this.userId = userId;
         this.comment = comment;
-        Type typeOfT = TypeToken.getParameterized(List.class, Uri.class).getType();
+
+        Type typeOfT = TypeToken.getParameterized(List.class, String.class).getType();
         this.photos = gson.fromJson(photos,typeOfT);
-        this.location = gson.fromJson(location, Location.class);
+
+        if(!location.equals("null")) {
+            ArrayList<String> tempLocation = gson.fromJson(location, typeOfT);
+            this.location = new Location("dummyprovider");
+            this.location.setLatitude(Double.parseDouble(tempLocation.get(0)));
+            this.location.setLongitude(Double.parseDouble(tempLocation.get(1)));
+        }
+
+        gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").create();
         this.time = gson.fromJson(time, Date.class);
     }
 
     public FirebaseEventPost(){}
-
 
     public String getUserId() {
         return userId;
@@ -52,11 +62,11 @@ public class FirebaseEventPost {
         this.userId = userId;
     }
 
-    public List<Uri> getPhotos() {
+    public List<String> getPhotos() {
         return photos;
     }
 
-    public void setPhotos(List<Uri> photos) {
+    public void setPhotos(List<String> photos) {
         this.photos = photos;
     }
 
@@ -90,7 +100,17 @@ public class FirebaseEventPost {
         result.put("userId", userId);
         result.put("comment", comment);
         result.put("photos", gson.toJson(photos));
-        result.put("location", gson.toJson(location));
+
+        if(location == null){
+            result.put("location", "null");
+        }else {
+            ArrayList<String> tempLocation = new ArrayList<>();
+            tempLocation.add(String.valueOf(location.getLatitude()));
+            tempLocation.add(String.valueOf(location.getLongitude()));
+            result.put("location", gson.toJson(tempLocation));
+        }
+
+        gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").create();
         result.put("time", gson.toJson(time));
 
         return result;
