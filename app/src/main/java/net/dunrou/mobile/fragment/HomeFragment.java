@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import net.dunrou.mobile.R;
+import net.dunrou.mobile.network.firebaseNetwork.FirebaseUtil;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -36,6 +37,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        new FirebaseUtil().getEventPost();
 //        if (getArguments() != null) {
 //        }
     }

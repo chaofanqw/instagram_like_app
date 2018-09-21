@@ -55,9 +55,9 @@ dependencies {
     compile 'org.greenrobot:greendao:3.2.2'
     compile 'com.google.code.gson:gson:2.8.0'
 
-    //noinspection GradleCompatible
-    implementation 'com.google.firebase:firebase-core:16.0.3'
-    implementation 'com.google.firebase:firebase-storage:16.0.1'
+    implementation 'com.google.firebase:firebase-core:11.4.2'
+    implementation 'com.google.firebase:firebase-storage:11.4.2'
+    implementation 'com.google.firebase:firebase-database:11.4.2'
 
     annotationProcessor 'com.zhy:mpermission-compiler:1.0.0'
     compile 'com.zhy:mpermission-api:1.0.0'
@@ -71,7 +71,12 @@ dependencies {
     implementation 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
 
+    implementation 'org.greenrobot:eventbus:3.1.1'
+    implementation 'com.afollestad.material-dialogs:core:0.9.6.0'
+
     compile 'de.hdodenhof:circleimageview:2.0.0'
+
+    compile ('io.nlopez.smartlocation:library:3.3.3')
 }
 
 apply plugin: 'com.google.gms.google-services'

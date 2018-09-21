@@ -8,30 +8,48 @@
     android:padding="16dp"
     android:orientation="vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/font_large"
-        android:text="@string/publish"
-        android:textColor="@color/colorPrimary"
-        android:layout_gravity="end"
-        android:layout_marginBottom="@dimen/activity_vertical_margin"
-        />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/arrow_back_primary"
+            android:id="@+id/btn_back"
+            />
+
+
+        <TextView
+            android:id="@+id/btn_publish"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/font_large"
+            android:text="@string/publish"
+            android:textColor="@color/colorPrimary"
+            android:layout_alignParentEnd="true"
+            android:layout_marginBottom="@dimen/activity_vertical_margin"
+            />
+    </RelativeLayout>
+
 
     <EditText
+        android:id="@+id/information_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/share_the_moment"
         android:gravity="top"
         android:background="@null"
-        android:lines="5"/>
+        android:lines="5"
+        />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_marginBottom="@dimen/activity_vertical_margin"
-        android:layout_marginLeft="3dp">
+        android:layout_marginLeft="3dp"
+        android:id="@+id/geo_locate">
 
         <ImageView
             android:layout_width="22dp"
@@ -41,12 +59,14 @@
             android:layout_gravity="center_vertical"/>
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/access_location"
             android:textSize="@dimen/font_large"
             android:textColor="@color/backgroundGrey"
-            android:layout_gravity="center_vertical"/>
+            android:layout_gravity="center_vertical"
+            android:id="@+id/location"
+            />
 
     </LinearLayout>
 

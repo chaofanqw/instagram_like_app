@@ -1,7 +1,8 @@
-package net.dunrou.mobile.network;
+package net.dunrou.mobile.network.firebaseNetwork;
 
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -12,7 +13,9 @@ import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.io.File;
+import net.dunrou.mobile.base.message.UploadMessage;
+
+import org.greenrobot.eventbus.EventBus;
 
 /**
  * Created by Stephen on 2018/9/11.
@@ -32,11 +35,12 @@ public class UploadImage {
 
         // Create the file metadata
         StorageMetadata metadata = new StorageMetadata.Builder()
-                .setContentType("image/jpeg")
+                .setContentType("image/png")
                 .build();
 
         // Upload file and metadata to the path 'images/mountains.jpg'
-        UploadTask uploadTask = storageReference.child("images/" + file.getLastPathSegment()).putFile(file, metadata);
+        final StorageReference pathReference = storageReference.child("images/" + file.getLastPathSegment());
+        UploadTask uploadTask = pathReference.putFile(file, metadata);
 
         // Listen for state changes, errors, and completion of the upload.
         uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
@@ -53,6 +57,8 @@ public class UploadImage {
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
+                exception.printStackTrace();
+                EventBus.getDefault().post(new UploadMessage(false, null));
                 // Handle unsuccessful uploads
             }
         }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -60,7 +66,22 @@ public class UploadImage {
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 // Handle successful uploads on complete
                 // ...
-                storageReference.getDownloadUrl();
+                pathReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        // Got the download URL for 'users/me/profile.png'
+                        Log.d("firebase", "onSuccess: "+uri);
+                        EventBus.getDefault().post(new UploadMessage(true, uri));
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception exception) {
+                        // Handle any errors
+                        Log.d("firebase", "onFailure: error");
+                        EventBus.getDefault().post(new UploadMessage(false, null));
+
+                    }
+                });
             }
         });
     }
