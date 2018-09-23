@@ -41,6 +41,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         mFragmensts = DataGenerator.getFragments("TabLayout Tab");
         initView();
 
+
+
 //        TextView test = findViewById(R.id.test);
 //        test.setOnClickListener(this);
     }

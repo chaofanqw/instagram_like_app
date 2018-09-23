@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import net.dunrou.mobile.R;
+import net.dunrou.mobile.fragment.DiscoverFragment;
 import net.dunrou.mobile.fragment.HomeFragment;
 import net.dunrou.mobile.fragment.PhotoFragment;
 
@@ -28,7 +29,7 @@ public class DataGenerator {
     public static Fragment[] getFragments(String from){
         Fragment fragments[] = new Fragment[5];
         fragments[0] = HomeFragment.newInstance();
-        fragments[1] = HomeFragment.newInstance();
+        fragments[1] = DiscoverFragment.newInstance();
         fragments[2] = null;
         fragments[3] = HomeFragment.newInstance();
         fragments[4] = HomeFragment.newInstance();
