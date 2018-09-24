@@ -21,6 +21,7 @@ import net.dunrou.mobile.network.InsNetwork;
 import net.dunrou.mobile.network.InsService;
 import net.dunrou.mobile.network.RetrofitUtil;
 
+
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 
@@ -32,6 +33,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private TabLayout mTabLayout;
     private Fragment []mFragmensts;
 
+    private final static String TAG = MainActivity.class.getSimpleName();
+    public static String currentUserID;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +44,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
         mFragmensts = DataGenerator.getFragments("TabLayout Tab");
         initView();
+        currentUserID = getIntent().getStringExtra("currentUserID");
+        Log.d(TAG, "currentUserID: " + currentUserID);
 
 
 

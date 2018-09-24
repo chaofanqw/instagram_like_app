@@ -3,8 +3,6 @@ package net.dunrou.mobile.fragment;
 import android.app.Fragment;
 import android.app.SearchManager;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -16,10 +14,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
+import android.widget.Toast;
 
 import net.dunrou.mobile.R;
-import net.dunrou.mobile.activity.MainActivity;
 import net.dunrou.mobile.bean.DiscoverUserAdapter;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import butterknife.OnClick;
 //import net.dunrou.mobile.activity.SearchableActivity;
@@ -56,6 +58,8 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EventBus.getDefault().register(this);
+        mContext = getActivity().getApplicationContext();
     }
 
     public void searchUsers(String query) {
@@ -74,6 +78,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     @Override
     public void onStop() {
         super.onStop();
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
@@ -91,7 +96,8 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
         mSearch_SV.setOnQueryTextListener(this);
 
         //TODO initialize in MainActivity
-        mDiscoverUserAdapter = new DiscoverUserAdapter();
+//        mDiscoverUserAdapter = new DiscoverUserAdapter();
+        initializeAdapter();
         mResults_RV = mView.findViewById(R.id.results_RV);
         mResults_RV.setAdapter(mDiscoverUserAdapter);
         mResults_RV.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -99,8 +105,8 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
         return mView;
     }
 
-    public void initializeAdapter(MainActivity mainActivity) {
-        mDiscoverUserAdapter = new DiscoverUserAdapter(mainActivity);
+    public void initializeAdapter() {
+        mDiscoverUserAdapter = new DiscoverUserAdapter(getActivity().getApplicationContext());
     }
 
     //TODO bug in UI click search, search bar disappear
@@ -135,4 +141,24 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
         Log.d(TAG, "click nearby");
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onNewUser(DiscoverUserAdapter.NewUserEvent newUserEvent) {
+        mDiscoverUserAdapter.addUser(newUserEvent.getSuggestedUser());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onRelationAdded(DiscoverUserAdapter.RelationAddedEvent relationAddedEvent) {
+//        TODO change follow button status
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onRelationAddFail(DiscoverUserAdapter.RelationAddFailEvent relationAddFailEvent) {
+        Toast toast = Toast.makeText(mContext, "follow fail", Toast.LENGTH_SHORT);
+        toast.show();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onSetRelationships(DiscoverUserAdapter.UpdateRelationshipEvent updateRelationshipEvent) {
+        mDiscoverUserAdapter.setRelationship(updateRelationshipEvent.getFirebaseRelationships());
+    }
 }

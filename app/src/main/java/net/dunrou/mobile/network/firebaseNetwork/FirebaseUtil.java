@@ -12,13 +12,17 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import net.dunrou.mobile.base.SuggestedUser;
 import net.dunrou.mobile.base.firebaseClass.FirebaseEventPost;
+import net.dunrou.mobile.base.firebaseClass.FirebaseRelationship;
 import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
 import net.dunrou.mobile.base.message.LoginMessage;
 import net.dunrou.mobile.base.message.UploadDatabaseMessage;
+import net.dunrou.mobile.bean.DiscoverUserAdapter;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -28,6 +32,8 @@ import java.util.Map;
  */
 
 public class FirebaseUtil {
+    private final static String TAG = FirebaseUtil.class.getSimpleName();
+
     FirebaseDatabase database;
     DatabaseReference myRef;
 
@@ -139,6 +145,97 @@ public class FirebaseUtil {
                 }else{
                     EventBus.getDefault().post(new LoginMessage(false, ""));
                 }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d("result", "onCancelled: error");
+            }
+        });
+    }
+
+//    TODO getSuggestedUserInformation
+    public void getSuggestedUserInformation(){
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("user");
+
+        Query query = myRef.orderByChild("userID");
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                for (DataSnapshot tempDataSnapshot : dataSnapshot.getChildren()) {
+                    HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
+
+                    EventBus.getDefault().post(new DiscoverUserAdapter.NewUserEvent(new SuggestedUser((String) result.get("userID"))));
+
+                    Log.d(TAG, "getUsers onDataChange: " + result.get("userID") + " " + result.get("password"));
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d("result", "onCancelled: error");
+            }
+        });
+    }
+
+    public void relationUpdate(final FirebaseRelationship firebaseRelationship, Boolean isExisted){
+
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("relationship");
+
+        Map<String, Object> childUpdates = new HashMap<>();
+        if(isExisted)
+            childUpdates.put("/" + firebaseRelationship.getRelationshipId(), firebaseRelationship.toMap());
+        else {
+            String key = myRef.push().getKey();
+            firebaseRelationship.setRelationshipId(key);
+            childUpdates.put("/" + key, firebaseRelationship.toMap());
+        }
+
+        myRef.updateChildren(childUpdates)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        EventBus.getDefault().post(new DiscoverUserAdapter.RelationAddedEvent(firebaseRelationship));
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        EventBus.getDefault().post(new DiscoverUserAdapter.RelationAddFailEvent());
+                    }
+                });
+    }
+
+//    TODO have bug when two phones log in same account
+    public void getRelationships(String currentUserID) {
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("relationship");
+
+        Query query = myRef.orderByChild("follower").equalTo(currentUserID);
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                ArrayList<FirebaseRelationship> firebaseRelationships = new ArrayList<FirebaseRelationship>();
+                Iterator<DataSnapshot> set = dataSnapshot.getChildren().iterator();
+//                Log.d(TAG, "getRelationships.onDataChange called");
+
+                while(set.hasNext()){
+                    DataSnapshot tempDataSnapshot = set.next();
+                    HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
+                    FirebaseRelationship firebaseRelationship = new FirebaseRelationship();
+                    firebaseRelationship.setRelationshipId((String)result.get("relationshipId"));
+                    firebaseRelationship.setFollower((String)result.get("follower"));
+                    firebaseRelationship.setFollowee((String)result.get("followee"));
+                    firebaseRelationship.setStatus(Boolean.valueOf((String)result.get("status")));
+                    firebaseRelationships.add(firebaseRelationship);
+//                    Log.d(TAG, "getRelationships.onDataChange value: " +
+//                            firebaseRelationship.getFollowee() + " " + firebaseRelationship.getStatus());
+                }
+
+                EventBus.getDefault().post(new DiscoverUserAdapter.UpdateRelationshipEvent(firebaseRelationships));
             }
 
             @Override
