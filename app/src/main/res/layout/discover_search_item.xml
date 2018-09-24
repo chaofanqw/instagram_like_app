@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="55dp"
+    android:layout_gravity="right"
+    android:minHeight="55dp">
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="10dp"
+        android:minHeight="50dp">
+
+        <de.hdodenhof.circleimageview.CircleImageView xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/avatar_IV"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="left|center_vertical|center_horizontal"
+            android:maxHeight="40dp"
+            android:maxWidth="40dp"
+            android:src="@drawable/profile_p"
+            app:civ_border_color="@color/black"
+            app:civ_border_width="0.1dp" />
+
+        <!--<ImageView-->
+        <!--android:id="@+id/round"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--app:srcCompat="@drawable/round5" />-->
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/userID_TV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="fill_horizontal|center"
+        android:layout_marginLeft="10dp"
+        android:text="TextView" />
+
+    <View
+        android:id="@+id/view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
+
+    <Button
+        android:id="@+id/follow_BT"
+        android:layout_width="75dp"
+        android:layout_height="25dp"
+        android:layout_gravity="right|center_vertical"
+        android:layout_marginRight="15dp"
+        android:background="#4a65f6"
+        android:singleLine="true"
+        android:text="follow"
+        android:textColor="@color/common_google_signin_btn_text_dark_default"
+        android:textSize="12sp" />
+
+</LinearLayout>
