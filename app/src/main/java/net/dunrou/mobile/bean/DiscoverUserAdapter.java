@@ -10,11 +10,12 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
 import net.dunrou.mobile.R;
 import net.dunrou.mobile.activity.MainActivity;
 import net.dunrou.mobile.base.SuggestedUser;
 import net.dunrou.mobile.base.firebaseClass.FirebaseRelationship;
-import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
 import net.dunrou.mobile.fragment.DiscoverFragment;
 import net.dunrou.mobile.network.firebaseNetwork.FirebaseUtil;
 
@@ -127,10 +128,12 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
 
         holder.mUserID_TV.setText(user.getUserID());
         holder.mDescription_TV.setText("  " + user.getValue() + user.getDescription());
-        if(user.getAvatarID() != -1)
-            holder.mAvatar_IV.setImageResource(user.getAvatarID());
-        else
+        if(user.getAvatarString() == "")
             holder.mAvatar_IV.setImageResource(R.drawable.profile_p);
+        else {
+            Picasso.with(mContext).load(user.getAvatarString()).fit().into(holder.mAvatar_IV);
+
+        }
 
         if(user.getIsFollowed()) {
             holder.mUnfollow_BT.setVisibility(View.VISIBLE);
@@ -187,21 +190,22 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
     /**
      * add a user in allUses when child listener of firebase called.
      */
-    public void addUser(FirebaseUser firebaseUser){
-        SuggestedUser suggestedUser = new SuggestedUser(firebaseUser.getUserID());
-        this.allUsers.add(suggestedUser);
-        Log.d(TAG, "addUser: " + suggestedUser.getUserID());
+    public void addUser(SuggestedUser user){
+        this.allUsers.add(user);
+//        Log.d(TAG, "addUser: " + user.getUserID());
         updateSuggested();
     }
 
     /**
      * update a user in allUses when child listener of firebase called.
      */
-    public void updateUser(FirebaseUser firebaseUser){
+    public void updateUser(SuggestedUser user){
         for(int i = 0; i < allUsers.size(); i++) {
-            if(allUsers.get(i).getUserID().equals(firebaseUser.getUserID())) {
-                allUsers.get(i).setAvatar(firebaseUser.getAvatar());
-                allUsers.get(i).setUserID(firebaseUser.getUserID());
+            if(allUsers.get(i).getUserID().equals(user.getUserID())) {
+//                allUsers.get(i).setAvatar(user.getAvatar());
+//                allUsers.get(i).setUserID(user.getUserID());
+//                allUsers.get(i).setAvatarString(user.getAvatarString());
+                allUsers.set(i, user);
             }
         }
         updateSuggested();
@@ -210,10 +214,10 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
     /**
      * remove a user in allUses when child listener of firebase called.
      */
-    public void removeUser(FirebaseUser firebaseUser){
+    public void removeUser(SuggestedUser user){
         ArrayList<SuggestedUser> targets = new ArrayList<>();
         for(SuggestedUser fu : allUsers) {
-            if(!fu.getUserID().equals(firebaseUser.getUserID()))
+            if(!fu.getUserID().equals(user.getUserID()))
                 targets.add(fu);
         }
         allUsers = targets;
@@ -255,6 +259,27 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
     }
 
     /**
+     * call when the result of search user received from firebase
+     * @param searchUsers
+     */
+    public void userSearchGet(ArrayList<SuggestedUser> searchUsers) {
+        HashMap<String, Integer> userMap = new HashMap<String, Integer>();
+        for(int i = 0; i < allUsers.size(); i++)
+            userMap.put(allUsers.get(i).getUserID(), i);
+
+        suggestedUsers_search = searchUsers;
+
+        for(int i = 0; i < suggestedUsers_search.size(); i++) {
+            Boolean isFollowed = allUsers.get(userMap.get(searchUsers.get(i).getUserID())).getIsFollowed();
+            suggestedUsers_search.get(i).setIsFollowed(isFollowed);
+        }
+
+        updateSuggested();
+        setSuggestMode(DiscoverUserAdapter.SEARCH);
+    }
+
+
+    /**
      * update a user's isFollowed field in allUses when child listener of firebase called.
      */
     public void updateAllUsersRelations(){
@@ -277,6 +302,7 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
 
         updateSuggestedUserTop();
         updateSuggestedUserCommonFriends();
+        updateSuggestedUserSearch();
         updateSuggestedUserTest();
 
         reconstructSuggestedUsers();
@@ -304,7 +330,31 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
      * update suggestedUsers_commonFriends
      */
     public void updateSuggestedUserTop() {
-        //TODO updateSuggestedUserTop
+        resetSuggestedUserTop();
+        for(FirebaseRelationship firebaseRelationship : allRelationships) {
+            if(firebaseRelationship.getStatus()) {
+                for(SuggestedUser user : allUsers) {
+                    if(user.getUserID().equals(firebaseRelationship.getFollowee()))
+                        user.setValue(user.getValue() + 1);
+                }
+            }
+        }
+        suggestedUsers_top = new ArrayList<>(allUsers);
+    }
+
+    /**
+     * update suggestedUsers_search
+     */
+    public void updateSuggestedUserSearch() {
+        if(suggestMode == SEARCH) {
+            for(int i = 0; i < suggestedUsers_search.size(); i++) {
+                for(SuggestedUser suggestedUser : allUsers) {
+                    if(suggestedUser.getUserID().equals(suggestedUsers_search.get(i).getUserID()))
+                        suggestedUsers_search.get(i).setIsFollowed(suggestedUser.getIsFollowed());
+                }
+            }
+            setSuggestMode(DiscoverUserAdapter.SEARCH);
+        }
     }
 
     /**
@@ -373,10 +423,28 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
     }
 
     /**
+     * set the values of all suggested user in allUsers to zero
+     */
+    public void resetSuggestedUserTop() {
+        for(int i = 0; i < allUsers.size(); i++) {
+            allUsers.get(i).setValue(0);
+        }
+    }
+
+    /**
      * remove item with value == 0
      * sort the list based on the "value" field
      */
     public void reconstructSuggestedUsers() {
+        reconstructSuggestedUsersTop();
+        reconstructSuggestedUsersCommonFriend();
+    }
+
+    /**
+     * remove item with value == 0
+     * sort the list based on the "value" field
+     */
+    public void reconstructSuggestedUsersCommonFriend() {
         ArrayList<SuggestedUser> targets1 = new ArrayList<>();
         for(int i = 0; i < suggestedUsers_commonFriends.size(); i++) {
             if(suggestedUsers_commonFriends.get(i).getValue() != 0)
@@ -384,19 +452,23 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
         }
         suggestedUsers_commonFriends = targets1;
         Collections.sort(suggestedUsers_commonFriends, valueComparator);
+    }
 
+    /**
+     * remove item with value == 0
+     * remove item with isFollowed = true
+     * sort the list based on the "value" field
+     */
+    public void reconstructSuggestedUsersTop() {
         ArrayList<SuggestedUser> targets2 = new ArrayList<>();
         for(int i = 0; i < suggestedUsers_top.size(); i++) {
-            if(suggestedUsers_top.get(i).getValue() != 0)
+            if(suggestedUsers_top.get(i).getValue() != 0
+                    && !suggestedUsers_top.get(i).getIsFollowed()
+                    && suggestedUsers_top.get(i).getUserID() != MainActivity.CURRENT_USERID)
                 targets2.add(suggestedUsers_top.get(i));
         }
         suggestedUsers_top = targets2;
         Collections.sort(suggestedUsers_top, valueComparator);
-
-        for(SuggestedUser suggestedUser : suggestedUsers_commonFriends)
-            Log.d(TAG, "suggest common: " + suggestedUser.getUserID() + " " + suggestedUser.getValue());
-        for(SuggestedUser suggestedUser : suggestedUsers_top)
-            Log.d(TAG, "suggest top: " + suggestedUser.getUserID() + " " + suggestedUser.getValue());
     }
 
     public static class DiscoverUserViewHolder extends RecyclerView.ViewHolder {

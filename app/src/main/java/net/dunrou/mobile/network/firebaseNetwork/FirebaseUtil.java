@@ -13,6 +13,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import net.dunrou.mobile.base.SuggestedUser;
 import net.dunrou.mobile.base.firebaseClass.FirebaseEventPost;
 import net.dunrou.mobile.base.firebaseClass.FirebaseRelationship;
 import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
@@ -190,7 +191,6 @@ public class FirebaseUtil {
         Query query  = myRef.orderByChild("follower");
 
         //TODO can not listen the whole relationship be deleted
-
 //        query.addListenerForSingleValueEvent(new ValueEventListener() {
 //            @Override
 //            public void onDataChange(DataSnapshot dataSnapshot) {
@@ -283,25 +283,25 @@ public class FirebaseUtil {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
-                FirebaseUser firebaseUser = new FirebaseUser();
-                firebaseUser.setUserID((String) result.get("userID"));
-                EventBus.getDefault().post(new DiscoverMessage.UserAddedEvent(firebaseUser));
+                SuggestedUser user = new SuggestedUser();
+                user.fromMap(result);
+                EventBus.getDefault().post(new DiscoverMessage.UserAddedEvent(user));
             }
 
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
                 HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
-                FirebaseUser firebaseUser = new FirebaseUser();
-                firebaseUser.setUserID((String) result.get("userID"));
-                EventBus.getDefault().post(new DiscoverMessage.UserChangedEvent(firebaseUser));
+                SuggestedUser user = new SuggestedUser();
+                user.fromMap(result);
+                EventBus.getDefault().post(new DiscoverMessage.UserChangedEvent(user));
             }
 
             @Override
             public void onChildRemoved(DataSnapshot dataSnapshot) {
                 HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
-                FirebaseUser firebaseUser = new FirebaseUser();
-                firebaseUser.setUserID((String) result.get("userID"));
-                EventBus.getDefault().post(new DiscoverMessage.UserRemovedEvent(firebaseUser));
+                SuggestedUser user = new SuggestedUser();
+                user.fromMap(result);
+                EventBus.getDefault().post(new DiscoverMessage.UserRemovedEvent(user));
             }
 
             @Override
@@ -312,6 +312,36 @@ public class FirebaseUtil {
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 Log.d("result", "ChildEventListener onCancelled: error");
+            }
+        });
+    }
+
+    public void searchUser(final String userID_part) {
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("user");
+
+        Query query  = myRef.orderByChild("userID").startAt(userID_part);
+
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Iterator<DataSnapshot> set = dataSnapshot.getChildren().iterator();
+                ArrayList<SuggestedUser> searchUsers = new ArrayList<>();
+
+                while(set.hasNext()) {
+                    DataSnapshot tempDataSnapshot = set.next();
+                    HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
+                    SuggestedUser searchUser = new SuggestedUser();
+                    searchUser.fromMap(result);
+                    searchUsers.add(searchUser);
+                    Log.d(TAG, "searchUser: " + searchUser.getUserID());
+                }
+                EventBus.getDefault().post(new DiscoverMessage.UserSearchGetEvent(searchUsers));
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
             }
         });
     }

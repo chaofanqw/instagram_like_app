@@ -1,10 +1,19 @@
 package net.dunrou.mobile.base;
 
-public class SuggestedUser extends User {
-    private String description;
+import android.util.Log;
+
+import net.dunrou.mobile.base.converter.UriConverter;
+import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
+
+import java.net.URI;
+import java.util.HashMap;
+
+public class SuggestedUser extends FirebaseUser{
+    private String description = " followers";
     private int avatarID = -1;
     private Boolean isFollowed = false;
     private int value = 0;
+    private String avatarString = "";
 
     public SuggestedUser() {
         super();
@@ -20,6 +29,13 @@ public class SuggestedUser extends User {
         this.avatarID = suggestedUser.avatarID;
         this.isFollowed = suggestedUser.isFollowed;
         this.value = suggestedUser.value;
+        this.avatarString = suggestedUser.getAvatarString();
+    }
+
+    public SuggestedUser(FirebaseUser firebaseUser) {
+        super.setUserID(firebaseUser.getUserID());
+        super.setPassword(firebaseUser.getPassword());
+        super.setAvatar(firebaseUser.getAvatar());
     }
 
     public SuggestedUser(String userID) {
@@ -67,4 +83,25 @@ public class SuggestedUser extends User {
     public int getValue() {
         return value;
     }
+
+
+    public void fromMap(HashMap<String, Object> result){
+        super.setUserID((String) result.get("userID"));
+        super.setPassword((String) result.get("password"));
+        if(result.get("avatar") != null) {
+            super.setAvatar(URI.create((String) result.get("avatar")));
+            this.avatarString = (String) result.get("avatar");
+            Log.d("avatar", (String) result.get("avatar"));
+        }
+        this.value = 0;
+    }
+
+    public void setAvatarString(String avatarString) {
+        this.avatarString = avatarString;
+    }
+
+    public String getAvatarString() {
+        return avatarString;
+    }
+
 }
