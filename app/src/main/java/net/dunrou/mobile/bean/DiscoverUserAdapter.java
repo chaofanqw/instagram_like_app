@@ -254,6 +254,23 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
         updateSuggested();
     }
 
+    public void userSearchGet(ArrayList<SuggestedUser> searchUsers) {
+        HashMap<String, Integer> userMap = new HashMap<String, Integer>();
+        for(int i = 0; i < allUsers.size(); i++)
+            userMap.put(allUsers.get(i).getUserID(), i);
+
+        suggestedUsers_search = searchUsers;
+
+        for(int i = 0; i < suggestedUsers_search.size(); i++) {
+            Boolean isFollowed = allUsers.get(userMap.get(searchUsers.get(i).getUserID())).getIsFollowed();
+            suggestedUsers_search.get(i).setIsFollowed(isFollowed);
+        }
+
+        updateSuggested();
+        setSuggestMode(DiscoverUserAdapter.SEARCH);
+    }
+
+
     /**
      * update a user's isFollowed field in allUses when child listener of firebase called.
      */
@@ -277,6 +294,7 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
 
         updateSuggestedUserTop();
         updateSuggestedUserCommonFriends();
+        updateSuggestedUserSearch();
         updateSuggestedUserTest();
 
         reconstructSuggestedUsers();
@@ -305,17 +323,45 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
      */
     public void updateSuggestedUserTop() {
         resetSuggestedUserTop();
-        HashMap<String, Integer> userMap = new HashMap<String, Integer>();
-        for(int i = 0; i < allUsers.size(); i++)
-            userMap.put(allUsers.get(i).getUserID(), i);
+//        HashMap<String, Integer> map = new HashMap<String, Integer>();
+//        for(int i = 0; i < allUsers.size(); i++)
+//            map.put(allUsers.get(i).getUserID(), i);
 
         for(FirebaseRelationship firebaseRelationship : allRelationships) {
             if(firebaseRelationship.getStatus()) {
-                int pre_value = allUsers.get(userMap.get(firebaseRelationship.getFollowee())).getValue();
-                allUsers.get(userMap.get(firebaseRelationship.getFollowee())).setValue(pre_value + 1);
+                for(SuggestedUser user : allUsers) {
+                    if(user.getUserID().equals(firebaseRelationship.getFollowee()))
+                        user.setValue(user.getValue() + 1);
+                }
+//                int pre_value = allUsers.get(map.get(firebaseRelationship.getFollowee())).getValue();
+//                allUsers.get(map.get(firebaseRelationship.getFollowee())).setValue(pre_value + 1);
+
             }
         }
         suggestedUsers_top = new ArrayList<>(allUsers);
+//        map = null;
+    }
+
+    public void updateSuggestedUserSearch() {
+        if(suggestMode == SEARCH) {
+//            HashMap<String, Integer> userMap = new HashMap<String, Integer>();
+//            for(int i = 0; i < allUsers.size(); i++)
+//                userMap.put(allUsers.get(i).getUserID(), i);
+
+            for(int i = 0; i < suggestedUsers_search.size(); i++) {
+                for(SuggestedUser suggestedUser : allUsers) {
+                    if(suggestedUser.getUserID().equals(suggestedUsers_search.get(i).getUserID()))
+                        suggestedUsers_search.get(i).setIsFollowed(suggestedUser.getIsFollowed());
+                }
+//                Boolean isFollowed = allUsers.get(userMap.get(suggestedUsers_search.get(i).getUserID())).getIsFollowed();
+
+            }
+
+            setSuggestMode(DiscoverUserAdapter.SEARCH);
+
+//            userMap = null;
+        }
+
     }
 
     /**

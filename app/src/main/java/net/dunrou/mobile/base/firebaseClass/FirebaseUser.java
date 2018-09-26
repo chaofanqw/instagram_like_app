@@ -1,10 +1,6 @@
 package net.dunrou.mobile.base.firebaseClass;
 
-import android.net.Uri;
-
 import net.dunrou.mobile.base.converter.UriConverter;
-
-import org.greenrobot.greendao.annotation.Convert;
 
 import java.net.URI;
 import java.util.HashMap;

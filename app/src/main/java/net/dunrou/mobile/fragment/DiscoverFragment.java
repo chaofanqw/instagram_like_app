@@ -13,18 +13,18 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.SearchView;
 import android.widget.Toast;
 
 import net.dunrou.mobile.R;
 import net.dunrou.mobile.base.message.DiscoverMessage;
 import net.dunrou.mobile.bean.DiscoverUserAdapter;
+import net.dunrou.mobile.network.firebaseNetwork.FirebaseUtil;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-
-import butterknife.OnClick;
 //import net.dunrou.mobile.activity.SearchableActivity;
 
 /**
@@ -45,6 +45,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     private SearchView mSearch_SV;
     private TabLayout mDiscoverNavBar_TL;
     private RecyclerView mResults_RV;
+    private Button mSearchCancel_BT;
 
     private TabLayout mDiscover_TL;
 
@@ -65,7 +66,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     }
 
     public void searchUsers(String query) {
-//        TODO search user query
+        new FirebaseUtil().searchUser(query);
     }
 
 
@@ -93,6 +94,15 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
 
         mView = inflater.inflate(R.layout.fragment_discover, container, false);
         mSearch_SV = mView.findViewById(R.id.search_SV);
+        mSearchCancel_BT = mView.findViewById(R.id.searchCancel_BT);
+
+        mSearchCancel_BT.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //TODO exit search mode
+                mSearch_SV.clearFocus();
+            }
+        });
 
         mSearchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
 
@@ -156,7 +166,6 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     public boolean onQueryTextSubmit(String query) {
         Log.d(TAG, "receive query: " + query);
         searchUsers(query);
-        mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.SEARCH);
         return false;
     }
 
@@ -164,7 +173,6 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     public boolean onQueryTextChange(String newText) {
         Log.d(TAG, "receive text change: " + newText);
         searchUsers(newText);
-        mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.SEARCH);
         return false;
     }
 
@@ -207,5 +215,10 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onUserRemovedEvent(DiscoverMessage.UserRemovedEvent userRemovedEvent) {
         mDiscoverUserAdapter.removeUser(userRemovedEvent.getFirebaseUser());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onUserSearchGetEvent(DiscoverMessage.UserSearchGetEvent userSearchGetEvent) {
+        mDiscoverUserAdapter.userSearchGet(userSearchGetEvent.getSuggestedUsers());
     }
 }

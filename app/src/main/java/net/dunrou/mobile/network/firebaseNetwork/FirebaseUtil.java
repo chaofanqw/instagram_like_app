@@ -13,6 +13,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import net.dunrou.mobile.base.SuggestedUser;
 import net.dunrou.mobile.base.firebaseClass.FirebaseEventPost;
 import net.dunrou.mobile.base.firebaseClass.FirebaseRelationship;
 import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
@@ -312,6 +313,36 @@ public class FirebaseUtil {
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 Log.d("result", "ChildEventListener onCancelled: error");
+            }
+        });
+    }
+
+    public void searchUser(final String userID_part) {
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("user");
+
+        Query query  = myRef.orderByChild("userID").startAt(userID_part);
+
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Iterator<DataSnapshot> set = dataSnapshot.getChildren().iterator();
+                ArrayList<SuggestedUser> searchUsers = new ArrayList<>();
+
+                while(set.hasNext()) {
+                    DataSnapshot tempDataSnapshot = set.next();
+                    HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
+                    SuggestedUser searchUser = new SuggestedUser();
+                    searchUser.fromMap(result);
+                    searchUsers.add(searchUser);
+                    Log.d(TAG, "searchUser: " + searchUser.getUserID());
+                }
+                EventBus.getDefault().post(new DiscoverMessage.UserSearchGetEvent(searchUsers));
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
             }
         });
     }

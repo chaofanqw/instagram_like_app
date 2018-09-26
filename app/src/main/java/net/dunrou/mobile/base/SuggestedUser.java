@@ -1,6 +1,11 @@
 package net.dunrou.mobile.base;
 
-public class SuggestedUser extends User {
+import net.dunrou.mobile.base.converter.UriConverter;
+import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
+
+import java.util.HashMap;
+
+public class SuggestedUser extends FirebaseUser{
     private String description = " followers";
     private int avatarID = -1;
     private Boolean isFollowed = false;
@@ -20,6 +25,12 @@ public class SuggestedUser extends User {
         this.avatarID = suggestedUser.avatarID;
         this.isFollowed = suggestedUser.isFollowed;
         this.value = suggestedUser.value;
+    }
+
+    public SuggestedUser(FirebaseUser firebaseUser) {
+        super.setUserID(firebaseUser.getUserID());
+        super.setPassword(firebaseUser.getPassword());
+        super.setAvatar(firebaseUser.getAvatar());
     }
 
     public SuggestedUser(String userID) {
@@ -66,5 +77,13 @@ public class SuggestedUser extends User {
 
     public int getValue() {
         return value;
+    }
+
+
+    public void fromMap(HashMap<String, Object> result){
+        super.setUserID((String) result.get("userID"));
+        super.setPassword((String) result.get("password"));
+        super.setAvatar(new UriConverter().convertToEntityProperty((String) result.get("avatar")));
+        this.value = 0;
     }
 }

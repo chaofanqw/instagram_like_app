@@ -5,7 +5,6 @@ import net.dunrou.mobile.base.firebaseClass.FirebaseRelationship;
 import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class DiscoverMessage {
     public static class RelationAddedEvent {
@@ -91,6 +90,18 @@ public class DiscoverMessage {
 
         public FirebaseUser getFirebaseUser() {
             return firebaseUser;
+        }
+    }
+
+    public static class UserSearchGetEvent {
+        private final ArrayList<SuggestedUser> suggestedUsers;
+
+        public UserSearchGetEvent(ArrayList<SuggestedUser> suggestedUsers) {
+            this.suggestedUsers = suggestedUsers;
+        }
+
+        public ArrayList<SuggestedUser> getSuggestedUsers() {
+            return suggestedUsers;
         }
     }
 }
