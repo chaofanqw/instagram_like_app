@@ -1,7 +1,7 @@
 package net.dunrou.mobile.base;
 
 public class SuggestedUser extends User {
-    private String description;
+    private String description = " followers";
     private int avatarID = -1;
     private Boolean isFollowed = false;
     private int value = 0;

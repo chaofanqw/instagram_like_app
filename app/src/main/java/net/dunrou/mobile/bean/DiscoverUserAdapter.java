@@ -304,7 +304,18 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
      * update suggestedUsers_commonFriends
      */
     public void updateSuggestedUserTop() {
-        //TODO updateSuggestedUserTop
+        resetSuggestedUserTop();
+        HashMap<String, Integer> userMap = new HashMap<String, Integer>();
+        for(int i = 0; i < allUsers.size(); i++)
+            userMap.put(allUsers.get(i).getUserID(), i);
+
+        for(FirebaseRelationship firebaseRelationship : allRelationships) {
+            if(firebaseRelationship.getStatus()) {
+                int pre_value = allUsers.get(userMap.get(firebaseRelationship.getFollowee())).getValue();
+                allUsers.get(userMap.get(firebaseRelationship.getFollowee())).setValue(pre_value + 1);
+            }
+        }
+        suggestedUsers_top = new ArrayList<>(allUsers);
     }
 
     /**
@@ -373,10 +384,28 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
     }
 
     /**
+     * set the values of all suggested user in allUsers to zero
+     */
+    public void resetSuggestedUserTop() {
+        for(int i = 0; i < allUsers.size(); i++) {
+            allUsers.get(i).setValue(0);
+        }
+    }
+
+    /**
      * remove item with value == 0
      * sort the list based on the "value" field
      */
     public void reconstructSuggestedUsers() {
+        reconstructSuggestedUsersTop();
+        reconstructSuggestedUsersCommonFriend();
+    }
+
+    /**
+     * remove item with value == 0
+     * sort the list based on the "value" field
+     */
+    public void reconstructSuggestedUsersCommonFriend() {
         ArrayList<SuggestedUser> targets1 = new ArrayList<>();
         for(int i = 0; i < suggestedUsers_commonFriends.size(); i++) {
             if(suggestedUsers_commonFriends.get(i).getValue() != 0)
@@ -384,19 +413,21 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
         }
         suggestedUsers_commonFriends = targets1;
         Collections.sort(suggestedUsers_commonFriends, valueComparator);
+    }
 
+    /**
+     * remove item with value == 0
+     * remove item with isFollowed = true
+     * sort the list based on the "value" field
+     */
+    public void reconstructSuggestedUsersTop() {
         ArrayList<SuggestedUser> targets2 = new ArrayList<>();
         for(int i = 0; i < suggestedUsers_top.size(); i++) {
-            if(suggestedUsers_top.get(i).getValue() != 0)
+            if(suggestedUsers_top.get(i).getValue() != 0 && !suggestedUsers_top.get(i).getIsFollowed())
                 targets2.add(suggestedUsers_top.get(i));
         }
         suggestedUsers_top = targets2;
         Collections.sort(suggestedUsers_top, valueComparator);
-
-        for(SuggestedUser suggestedUser : suggestedUsers_commonFriends)
-            Log.d(TAG, "suggest common: " + suggestedUser.getUserID() + " " + suggestedUser.getValue());
-        for(SuggestedUser suggestedUser : suggestedUsers_top)
-            Log.d(TAG, "suggest top: " + suggestedUser.getUserID() + " " + suggestedUser.getValue());
     }
 
     public static class DiscoverUserViewHolder extends RecyclerView.ViewHolder {
