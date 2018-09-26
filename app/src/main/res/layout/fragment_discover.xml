@@ -72,6 +72,14 @@
 
     </android.support.design.widget.TabLayout>
 
+    <TextView
+        android:id="@+id/searchUser_TV"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="searching user..."
+        android:textAlignment="center"
+        android:visibility="gone" />
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/results_RV"
         android:layout_width="match_parent"

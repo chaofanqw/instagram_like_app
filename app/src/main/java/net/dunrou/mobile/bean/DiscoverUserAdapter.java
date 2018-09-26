@@ -275,7 +275,6 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
         }
 
         updateSuggested();
-        setSuggestMode(DiscoverUserAdapter.SEARCH);
     }
 
 
@@ -353,7 +352,6 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
                         suggestedUsers_search.get(i).setIsFollowed(suggestedUser.getIsFollowed());
                 }
             }
-            setSuggestMode(DiscoverUserAdapter.SEARCH);
         }
     }
 
@@ -491,5 +489,13 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
     public void setSuggestMode(int suggestMode) {
         this.suggestMode = suggestMode;
         notifyDataSetChanged();
+    }
+
+    public int getSuggestMode() {
+        return suggestMode;
+    }
+
+    public ArrayList<SuggestedUser> getSuggestedUsers_search() {
+        return suggestedUsers_search;
     }
 }

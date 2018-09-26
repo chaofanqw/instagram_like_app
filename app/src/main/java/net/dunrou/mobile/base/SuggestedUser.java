@@ -9,7 +9,7 @@ import java.net.URI;
 import java.util.HashMap;
 
 public class SuggestedUser extends FirebaseUser{
-    private String description = " followers";
+    private String description = " follower";
     private int avatarID = -1;
     private Boolean isFollowed = false;
     private int value = 0;

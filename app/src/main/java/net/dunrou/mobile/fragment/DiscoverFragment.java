@@ -15,7 +15,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.SearchView;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.afollestad.materialdialogs.MaterialDialog;
 
 import net.dunrou.mobile.R;
 import net.dunrou.mobile.base.message.DiscoverMessage;
@@ -34,8 +37,6 @@ import org.greenrobot.eventbus.ThreadMode;
 public class DiscoverFragment extends Fragment implements SearchView.OnQueryTextListener {
     private transient final static String TAG = DiscoverFragment.class.getSimpleName();
 
-//    private DiscoverFragment.OnFragmentInteractionListener mListener;
-
     private View mView;
 
     private SearchManager mSearchManager;
@@ -43,11 +44,14 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     private Context mContext;
 
     private SearchView mSearch_SV;
-    private TabLayout mDiscoverNavBar_TL;
     private RecyclerView mResults_RV;
     private Button mSearchCancel_BT;
+    private TextView mSearchUser_TV;
 
     private TabLayout mDiscover_TL;
+    private TabLayout.Tab tab_top;
+    private TabLayout.Tab tab_commonFriend;
+    private TabLayout.Tab tab_nearby;
 
     public DiscoverFragment() {
     }
@@ -63,19 +67,12 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = getActivity().getApplicationContext();
+        EventBus.getDefault().register(this);
     }
-
-    public void searchUsers(String query) {
-        new FirebaseUtil().searchUser(query);
-    }
-
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        EventBus.getDefault().register(this);
-//        Intent intent = new Intent(getActivity(), SearchableActivity.class);
-//        startActivity(intent);
     }
 
     @Override
@@ -86,50 +83,57 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     @Override
     public void onStop() {
         super.onStop();
-//        EventBus.getDefault().unregister(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         mView = inflater.inflate(R.layout.fragment_discover, container, false);
-        mSearch_SV = mView.findViewById(R.id.search_SV);
-        mSearchCancel_BT = mView.findViewById(R.id.searchCancel_BT);
 
-        mSearchCancel_BT.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //TODO exit search mode
-                mSearch_SV.clearFocus();
-            }
-        });
+        initializeTabLayout();
+        initializeSearch();
+        initializeAdapter();
+        initializeRecycleLayout();
 
-        mSearchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
+        return mView;
+    }
 
-        mSearch_SV.setSearchableInfo(mSearchManager.getSearchableInfo(getActivity().getComponentName()));
-        mSearch_SV.setIconifiedByDefault(false);
-
-        mSearch_SV.setSubmitButtonEnabled(true);
-        mSearch_SV.setOnQueryTextListener(this);
-
+    public void initializeTabLayout() {
         mDiscover_TL = mView.findViewById(R.id.discover_TL);
-        TabLayout.Tab tab = mDiscover_TL.getTabAt(1);
-        tab.select();
+        tab_top= mDiscover_TL.getTabAt(0);
+        tab_commonFriend = mDiscover_TL.getTabAt(1);
+        tab_nearby = mDiscover_TL.getTabAt(2);
+        tab_commonFriend.select();
         mDiscover_TL.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 switch(tab.getPosition()) {
                     case 0:
                         Log.d(TAG, "click top");
+                        mSearch_SV.clearFocus();
+                        mSearch_SV.setQuery("", false);
                         mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.TOP);
+                        mSearchUser_TV.setVisibility(View.GONE);
                         break;
                     case 1:
                         Log.d(TAG, "click people");
+                        mSearch_SV.clearFocus();
+                        mSearch_SV.setQuery("", false);
                         mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.COMMON_FRIENDS);
+                        mSearchUser_TV.setVisibility(View.GONE);
                         break;
                     case 2:
                         Log.d(TAG, "click nearby");
+                        mSearch_SV.clearFocus();
+                        mSearch_SV.setQuery("", false);
                         mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.TEST);
+                        mSearchUser_TV.setVisibility(View.GONE);
                         break;
                 }
             }
@@ -144,42 +148,72 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
 
             }
         });
+    }
 
-        //TODO initialize in MainActivity
-//        mDiscoverUserAdapter = new DiscoverUserAdapter();
-        initializeAdapter();
-        mResults_RV = mView.findViewById(R.id.results_RV);
-        mResults_RV.setAdapter(mDiscoverUserAdapter);
-        mResults_RV.setLayoutManager(new LinearLayoutManager(getActivity()));
+    public void initializeSearch() {
+        mSearch_SV = mView.findViewById(R.id.search_SV);
+        mSearchCancel_BT = mView.findViewById(R.id.searchCancel_BT);
+        mSearchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
 
-        return mView;
+        mSearchUser_TV = mView.findViewById(R.id.searchUser_TV);
+
+        mSearch_SV.setSearchableInfo(mSearchManager.getSearchableInfo(getActivity().getComponentName()));
+        mSearch_SV.setIconifiedByDefault(false);
+
+        mSearch_SV.setSubmitButtonEnabled(true);
+        mSearch_SV.setOnQueryTextListener(this);
+
+        mSearchCancel_BT.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mSearch_SV.clearFocus();
+                mSearchUser_TV.setVisibility(View.GONE);
+
+                mSearch_SV.setQuery("", false);
+
+                if(tab_top.isSelected())
+                    mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.TOP);
+                else if(tab_commonFriend.isSelected())
+                    mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.COMMON_FRIENDS);
+                else
+                    mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.TEST);
+            }
+        });
     }
 
     public void initializeAdapter() {
         mDiscoverUserAdapter = new DiscoverUserAdapter(getActivity().getApplicationContext());
     }
 
-    //TODO bug in UI click search, search bar disappear
-
+    public void initializeRecycleLayout() {
+        mResults_RV = mView.findViewById(R.id.results_RV);
+        mResults_RV.setAdapter(mDiscoverUserAdapter);
+        mResults_RV.setLayoutManager(new LinearLayoutManager(getActivity()));
+    }
 
     @Override
     public boolean onQueryTextSubmit(String query) {
-        Log.d(TAG, "receive query: " + query);
+//        Log.d(TAG, "receive query: " + query);
         searchUsers(query);
         return false;
     }
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        Log.d(TAG, "receive text change: " + newText);
+//        Log.d(TAG, "receive text change: " + newText);
         searchUsers(newText);
         return false;
     }
 
-//    @Subscribe(threadMode = ThreadMode.MAIN)
-//    public void onRelationAdded(DiscoverUserAdapter.RelationAddedEvent relationAddedEvent) {
-////        TODO change follow button status
-//    }
+
+    public void searchUsers(String query) {
+        mDiscoverUserAdapter.getSuggestedUsers_search().clear();
+        mSearchUser_TV.setVisibility(View.VISIBLE);
+
+        mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.SEARCH);
+        if(mDiscoverUserAdapter.getSuggestMode() == DiscoverUserAdapter.SEARCH)
+            new FirebaseUtil().searchUser(query);
+    }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onRelationAddFail(DiscoverMessage.RelationAddFailEvent relationAddFailEvent) {
@@ -219,6 +253,8 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onUserSearchGetEvent(DiscoverMessage.UserSearchGetEvent userSearchGetEvent) {
-        mDiscoverUserAdapter.userSearchGet(userSearchGetEvent.getSuggestedUsers());
+        mSearchUser_TV.setVisibility(View.GONE);
+        if(mDiscoverUserAdapter.getSuggestMode() == DiscoverUserAdapter.SEARCH)
+            mDiscoverUserAdapter.userSearchGet(userSearchGetEvent.getSuggestedUsers());
     }
 }
