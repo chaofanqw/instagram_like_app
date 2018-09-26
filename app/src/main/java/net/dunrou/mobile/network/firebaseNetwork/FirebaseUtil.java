@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -13,12 +14,15 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import net.dunrou.mobile.base.firebaseClass.FirebaseEventPost;
+import net.dunrou.mobile.base.firebaseClass.FirebaseRelationship;
 import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
+import net.dunrou.mobile.base.message.DiscoverMessage;
 import net.dunrou.mobile.base.message.LoginMessage;
 import net.dunrou.mobile.base.message.UploadDatabaseMessage;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -28,6 +32,8 @@ import java.util.Map;
  */
 
 public class FirebaseUtil {
+    private final static String TAG = FirebaseUtil.class.getSimpleName();
+
     FirebaseDatabase database;
     DatabaseReference myRef;
 
@@ -80,7 +86,7 @@ public class FirebaseUtil {
                             (String) result.get("location"),
                             (String) result.get("time"));
 
-                    Log.d("result", "onDataChange: "+data.getComment());
+//                    Log.d("result", "onDataChange: "+data.getComment());
                 }
             }
 
@@ -126,7 +132,7 @@ public class FirebaseUtil {
                 Iterator<DataSnapshot> set = dataSnapshot.getChildren().iterator();
 
                 if(set.hasNext()){
-                    Log.d("result", "onDataChange: ");
+//                    Log.d("result", "onDataChange: ");
                     DataSnapshot tempDataSnapshot = set.next();
                     HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
 
@@ -144,6 +150,168 @@ public class FirebaseUtil {
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 Log.d("result", "onCancelled: error");
+            }
+        });
+    }
+
+    public void updateRelationship(final FirebaseRelationship firebaseRelationship, Boolean isExisted){
+
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("relationship");
+
+        Map<String, Object> childUpdates = new HashMap<>();
+        if(isExisted)
+            childUpdates.put("/" + firebaseRelationship.getRelationshipId(), firebaseRelationship.toMap());
+        else {
+            String key = myRef.push().getKey();
+            firebaseRelationship.setRelationshipId(key);
+            childUpdates.put("/" + key, firebaseRelationship.toMap());
+        }
+
+        myRef.updateChildren(childUpdates)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+//                        EventBus.getDefault().post(new DiscoverUserAdapter.RelationAddedEvent(firebaseRelationship));
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        EventBus.getDefault().post(new DiscoverMessage.RelationAddFailEvent());
+                    }
+                });
+    }
+
+    public void setRelationshipsListener() {
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("relationship");
+
+        Query query  = myRef.orderByChild("follower");
+
+        //TODO can not listen the whole relationship be deleted
+
+//        query.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                Iterator<DataSnapshot> set = dataSnapshot.getChildren().iterator();
+////                Log.d(TAG, "setRelationshipsListener.onDataChange called");
+//
+//                while(set.hasNext()){
+//                    DataSnapshot tempDataSnapshot = set.next();
+//                    HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
+//                    FirebaseRelationship firebaseRelationship = new FirebaseRelationship();
+//                    firebaseRelationship.fromMap(result);
+//                    EventBus.getDefault().post(new DiscoverMessage.RelationshipAddedEvent(firebaseRelationship));
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//                Log.d("result", "ValueEventListener onCancelled: error");
+//            }
+//        });
+
+        query.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseRelationship firebaseRelationship = new FirebaseRelationship();
+                firebaseRelationship.fromMap(result);
+                Log.d(TAG, "setRelationshipsListener.onChildAdded value: " +
+                            firebaseRelationship.getFollowee() + " " + firebaseRelationship.getStatus());
+                EventBus.getDefault().post(new DiscoverMessage.RelationshipAddedEvent(firebaseRelationship));
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseRelationship firebaseRelationship = new FirebaseRelationship();
+                firebaseRelationship.fromMap(result);
+                Log.d(TAG, "setRelationshipsListener.onChildChanged value: " +
+                        firebaseRelationship.getFollowee() + " " + firebaseRelationship.getStatus());
+                EventBus.getDefault().post(new DiscoverMessage.RelationshipChangedEvent(firebaseRelationship));
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseRelationship firebaseRelationship = new FirebaseRelationship();
+                firebaseRelationship.fromMap(result);
+                EventBus.getDefault().post(new DiscoverMessage.RelationshipRemovedEvent(firebaseRelationship));
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d("result", "ChildEventListener onCancelled: error");
+            }
+        });
+    }
+
+    public void setUsersListener() {
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("user");
+
+        Query query  = myRef.orderByChild("userID");
+
+//        query.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                Iterator<DataSnapshot> set = dataSnapshot.getChildren().iterator();
+//
+//                while(set.hasNext()){
+//                    DataSnapshot tempDataSnapshot = set.next();
+//                    HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
+//                    FirebaseUser firebaseUser = new FirebaseUser();
+//                    firebaseUser.setUserID((String) result.get("userID"));
+//                    EventBus.getDefault().post(new DiscoverMessage.UserAddedEvent(firebaseUser));
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//                Log.d(TAG, "ValueEventListener onCancelled: error");
+//            }
+//        });
+
+        query.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseUser firebaseUser = new FirebaseUser();
+                firebaseUser.setUserID((String) result.get("userID"));
+                EventBus.getDefault().post(new DiscoverMessage.UserAddedEvent(firebaseUser));
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseUser firebaseUser = new FirebaseUser();
+                firebaseUser.setUserID((String) result.get("userID"));
+                EventBus.getDefault().post(new DiscoverMessage.UserChangedEvent(firebaseUser));
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseUser firebaseUser = new FirebaseUser();
+                firebaseUser.setUserID((String) result.get("userID"));
+                EventBus.getDefault().post(new DiscoverMessage.UserRemovedEvent(firebaseUser));
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d("result", "ChildEventListener onCancelled: error");
             }
         });
     }

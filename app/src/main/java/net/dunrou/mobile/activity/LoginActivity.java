@@ -247,6 +247,7 @@ public class LoginActivity extends BaseActivity {
 
         if(loginMessage.isSuccess()){
             Intent intent = new Intent(this, MainActivity.class);
+            intent.putExtra("CURRENT_USERID", loginMessage.getUserID());
             startActivity(intent);
         }else{
             Toast.makeText(this, "Something wrong!", Toast.LENGTH_SHORT).show();

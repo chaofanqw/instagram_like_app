@@ -6,12 +6,9 @@ import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.lzy.imagepicker.ImagePicker;
 
 import net.dunrou.mobile.R;
 import net.dunrou.mobile.bean.BaseActivity;
@@ -20,6 +17,7 @@ import net.dunrou.mobile.network.HttpResult;
 import net.dunrou.mobile.network.InsNetwork;
 import net.dunrou.mobile.network.InsService;
 import net.dunrou.mobile.network.RetrofitUtil;
+
 
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
@@ -32,6 +30,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private TabLayout mTabLayout;
     private Fragment []mFragmensts;
 
+    private final static String TAG = MainActivity.class.getSimpleName();
+    public static String CURRENT_USERID;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +41,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
         mFragmensts = DataGenerator.getFragments("TabLayout Tab");
         initView();
+        CURRENT_USERID = getIntent().getStringExtra("CURRENT_USERID");
+        Log.d(TAG, "CURRENT_USERID: " + CURRENT_USERID);
 
 
 
