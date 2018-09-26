@@ -17,6 +17,7 @@ import android.widget.SearchView;
 import android.widget.Toast;
 
 import net.dunrou.mobile.R;
+import net.dunrou.mobile.base.message.DiscoverMessage;
 import net.dunrou.mobile.bean.DiscoverUserAdapter;
 
 import org.greenrobot.eventbus.EventBus;
@@ -45,6 +46,8 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     private TabLayout mDiscoverNavBar_TL;
     private RecyclerView mResults_RV;
 
+    private TabLayout mDiscover_TL;
+
     public DiscoverFragment() {
     }
 
@@ -58,7 +61,6 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EventBus.getDefault().register(this);
         mContext = getActivity().getApplicationContext();
     }
 
@@ -72,7 +74,12 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
         super.onViewCreated(view, savedInstanceState);
 //        Intent intent = new Intent(getActivity(), SearchableActivity.class);
 //        startActivity(intent);
+    }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        EventBus.getDefault().register(this);
     }
 
     @Override
@@ -95,6 +102,39 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
         mSearch_SV.setSubmitButtonEnabled(true);
         mSearch_SV.setOnQueryTextListener(this);
 
+        mDiscover_TL = mView.findViewById(R.id.discover_TL);
+        TabLayout.Tab tab = mDiscover_TL.getTabAt(1);
+        tab.select();
+        mDiscover_TL.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                switch(tab.getPosition()) {
+                    case 0:
+                        Log.d(TAG, "click top");
+                        mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.TOP);
+                        break;
+                    case 1:
+                        Log.d(TAG, "click people");
+                        mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.COMMON_FRIENDS);
+                        break;
+                    case 2:
+                        Log.d(TAG, "click nearby");
+                        mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.TEST);
+                        break;
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
+
         //TODO initialize in MainActivity
 //        mDiscoverUserAdapter = new DiscoverUserAdapter();
         initializeAdapter();
@@ -116,6 +156,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     public boolean onQueryTextSubmit(String query) {
         Log.d(TAG, "receive query: " + query);
         searchUsers(query);
+        mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.SEARCH);
         return false;
     }
 
@@ -123,42 +164,48 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     public boolean onQueryTextChange(String newText) {
         Log.d(TAG, "receive text change: " + newText);
         searchUsers(newText);
+        mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.SEARCH);
         return false;
     }
 
-    @OnClick(R.id.top_TI)
-    public void clickTop() {
-        Log.d(TAG, "click top");
-    }
-
-    @OnClick(R.id.people_TI)
-    public void clickPeople() {
-        Log.d(TAG, "click people");
-    }
-
-    @OnClick(R.id.nearby_TI)
-    public void clickNearby() {
-        Log.d(TAG, "click nearby");
-    }
+//    @Subscribe(threadMode = ThreadMode.MAIN)
+//    public void onRelationAdded(DiscoverUserAdapter.RelationAddedEvent relationAddedEvent) {
+////        TODO change follow button status
+//    }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onNewUser(DiscoverUserAdapter.NewUserEvent newUserEvent) {
-        mDiscoverUserAdapter.addUser(newUserEvent.getSuggestedUser());
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onRelationAdded(DiscoverUserAdapter.RelationAddedEvent relationAddedEvent) {
-//        TODO change follow button status
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onRelationAddFail(DiscoverUserAdapter.RelationAddFailEvent relationAddFailEvent) {
+    public void onRelationAddFail(DiscoverMessage.RelationAddFailEvent relationAddFailEvent) {
         Toast toast = Toast.makeText(mContext, "follow fail", Toast.LENGTH_SHORT);
         toast.show();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onSetRelationships(DiscoverUserAdapter.UpdateRelationshipEvent updateRelationshipEvent) {
-        mDiscoverUserAdapter.setRelationship(updateRelationshipEvent.getFirebaseRelationships());
+    public void onRelationshipAddedEvent(DiscoverMessage.RelationshipAddedEvent relationshipChildAddedEvent) {
+        mDiscoverUserAdapter.addRelationship(relationshipChildAddedEvent.getFirebaseRelationship());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onRelationshipChangedEvent(DiscoverMessage.RelationshipChangedEvent relationshipChildAddedEvent) {
+        mDiscoverUserAdapter.updateRelationship(relationshipChildAddedEvent.getFirebaseRelationship());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onRelationshipRemovedEvent(DiscoverMessage.RelationshipRemovedEvent relationshipChildAddedEvent) {
+        mDiscoverUserAdapter.removeRelationship(relationshipChildAddedEvent.getFirebaseRelationship());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onUserAddedEvent(DiscoverMessage.UserAddedEvent userAddedEvent) {
+        mDiscoverUserAdapter.addUser(userAddedEvent.getFirebaseUser());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onUserChangedEvent(DiscoverMessage.UserChangedEvent userChangedEvent) {
+        mDiscoverUserAdapter.updateUser(userChangedEvent.getFirebaseUser());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onUserRemovedEvent(DiscoverMessage.UserRemovedEvent userRemovedEvent) {
+        mDiscoverUserAdapter.removeUser(userRemovedEvent.getFirebaseUser());
     }
 }

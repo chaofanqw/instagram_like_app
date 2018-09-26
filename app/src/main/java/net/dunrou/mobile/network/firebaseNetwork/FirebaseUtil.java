@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -12,13 +13,12 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import net.dunrou.mobile.base.SuggestedUser;
 import net.dunrou.mobile.base.firebaseClass.FirebaseEventPost;
 import net.dunrou.mobile.base.firebaseClass.FirebaseRelationship;
 import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
+import net.dunrou.mobile.base.message.DiscoverMessage;
 import net.dunrou.mobile.base.message.LoginMessage;
 import net.dunrou.mobile.base.message.UploadDatabaseMessage;
-import net.dunrou.mobile.bean.DiscoverUserAdapter;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -86,7 +86,7 @@ public class FirebaseUtil {
                             (String) result.get("location"),
                             (String) result.get("time"));
 
-                    Log.d("result", "onDataChange: "+data.getComment());
+//                    Log.d("result", "onDataChange: "+data.getComment());
                 }
             }
 
@@ -132,7 +132,7 @@ public class FirebaseUtil {
                 Iterator<DataSnapshot> set = dataSnapshot.getChildren().iterator();
 
                 if(set.hasNext()){
-                    Log.d("result", "onDataChange: ");
+//                    Log.d("result", "onDataChange: ");
                     DataSnapshot tempDataSnapshot = set.next();
                     HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
 
@@ -154,33 +154,7 @@ public class FirebaseUtil {
         });
     }
 
-//    TODO getSuggestedUserInformation
-    public void getSuggestedUserInformation(){
-        database = FirebaseDatabase.getInstance();
-        myRef = database.getReference("user");
-
-        Query query = myRef.orderByChild("userID");
-        query.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                for (DataSnapshot tempDataSnapshot : dataSnapshot.getChildren()) {
-                    HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
-
-                    EventBus.getDefault().post(new DiscoverUserAdapter.NewUserEvent(new SuggestedUser((String) result.get("userID"))));
-
-                    Log.d(TAG, "getUsers onDataChange: " + result.get("userID") + " " + result.get("password"));
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.d("result", "onCancelled: error");
-            }
-        });
-    }
-
-    public void relationUpdate(final FirebaseRelationship firebaseRelationship, Boolean isExisted){
+    public void updateRelationship(final FirebaseRelationship firebaseRelationship, Boolean isExisted){
 
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("relationship");
@@ -198,49 +172,146 @@ public class FirebaseUtil {
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        EventBus.getDefault().post(new DiscoverUserAdapter.RelationAddedEvent(firebaseRelationship));
+//                        EventBus.getDefault().post(new DiscoverUserAdapter.RelationAddedEvent(firebaseRelationship));
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        EventBus.getDefault().post(new DiscoverUserAdapter.RelationAddFailEvent());
+                        EventBus.getDefault().post(new DiscoverMessage.RelationAddFailEvent());
                     }
                 });
     }
 
-//    TODO have bug when two phones log in same account
-    public void getRelationships(String currentUserID) {
+    public void setRelationshipsListener() {
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("relationship");
 
-        Query query = myRef.orderByChild("follower").equalTo(currentUserID);
-        query.addValueEventListener(new ValueEventListener() {
+        Query query  = myRef.orderByChild("follower");
+
+        //TODO can not listen the whole relationship be deleted
+
+//        query.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                Iterator<DataSnapshot> set = dataSnapshot.getChildren().iterator();
+////                Log.d(TAG, "setRelationshipsListener.onDataChange called");
+//
+//                while(set.hasNext()){
+//                    DataSnapshot tempDataSnapshot = set.next();
+//                    HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
+//                    FirebaseRelationship firebaseRelationship = new FirebaseRelationship();
+//                    firebaseRelationship.fromMap(result);
+//                    EventBus.getDefault().post(new DiscoverMessage.RelationshipAddedEvent(firebaseRelationship));
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//                Log.d("result", "ValueEventListener onCancelled: error");
+//            }
+//        });
+
+        query.addChildEventListener(new ChildEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                ArrayList<FirebaseRelationship> firebaseRelationships = new ArrayList<FirebaseRelationship>();
-                Iterator<DataSnapshot> set = dataSnapshot.getChildren().iterator();
-//                Log.d(TAG, "getRelationships.onDataChange called");
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseRelationship firebaseRelationship = new FirebaseRelationship();
+                firebaseRelationship.fromMap(result);
+                Log.d(TAG, "setRelationshipsListener.onChildAdded value: " +
+                            firebaseRelationship.getFollowee() + " " + firebaseRelationship.getStatus());
+                EventBus.getDefault().post(new DiscoverMessage.RelationshipAddedEvent(firebaseRelationship));
+            }
 
-                while(set.hasNext()){
-                    DataSnapshot tempDataSnapshot = set.next();
-                    HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
-                    FirebaseRelationship firebaseRelationship = new FirebaseRelationship();
-                    firebaseRelationship.setRelationshipId((String)result.get("relationshipId"));
-                    firebaseRelationship.setFollower((String)result.get("follower"));
-                    firebaseRelationship.setFollowee((String)result.get("followee"));
-                    firebaseRelationship.setStatus(Boolean.valueOf((String)result.get("status")));
-                    firebaseRelationships.add(firebaseRelationship);
-//                    Log.d(TAG, "getRelationships.onDataChange value: " +
-//                            firebaseRelationship.getFollowee() + " " + firebaseRelationship.getStatus());
-                }
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseRelationship firebaseRelationship = new FirebaseRelationship();
+                firebaseRelationship.fromMap(result);
+                Log.d(TAG, "setRelationshipsListener.onChildChanged value: " +
+                        firebaseRelationship.getFollowee() + " " + firebaseRelationship.getStatus());
+                EventBus.getDefault().post(new DiscoverMessage.RelationshipChangedEvent(firebaseRelationship));
+            }
 
-                EventBus.getDefault().post(new DiscoverUserAdapter.UpdateRelationshipEvent(firebaseRelationships));
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseRelationship firebaseRelationship = new FirebaseRelationship();
+                firebaseRelationship.fromMap(result);
+                EventBus.getDefault().post(new DiscoverMessage.RelationshipRemovedEvent(firebaseRelationship));
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Log.d("result", "onCancelled: error");
+                Log.d("result", "ChildEventListener onCancelled: error");
+            }
+        });
+    }
+
+    public void setUsersListener() {
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("user");
+
+        Query query  = myRef.orderByChild("userID");
+
+//        query.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                Iterator<DataSnapshot> set = dataSnapshot.getChildren().iterator();
+//
+//                while(set.hasNext()){
+//                    DataSnapshot tempDataSnapshot = set.next();
+//                    HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
+//                    FirebaseUser firebaseUser = new FirebaseUser();
+//                    firebaseUser.setUserID((String) result.get("userID"));
+//                    EventBus.getDefault().post(new DiscoverMessage.UserAddedEvent(firebaseUser));
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//                Log.d(TAG, "ValueEventListener onCancelled: error");
+//            }
+//        });
+
+        query.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseUser firebaseUser = new FirebaseUser();
+                firebaseUser.setUserID((String) result.get("userID"));
+                EventBus.getDefault().post(new DiscoverMessage.UserAddedEvent(firebaseUser));
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseUser firebaseUser = new FirebaseUser();
+                firebaseUser.setUserID((String) result.get("userID"));
+                EventBus.getDefault().post(new DiscoverMessage.UserChangedEvent(firebaseUser));
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseUser firebaseUser = new FirebaseUser();
+                firebaseUser.setUserID((String) result.get("userID"));
+                EventBus.getDefault().post(new DiscoverMessage.UserRemovedEvent(firebaseUser));
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d("result", "ChildEventListener onCancelled: error");
             }
         });
     }

@@ -14,12 +14,16 @@ import net.dunrou.mobile.R;
 import net.dunrou.mobile.activity.MainActivity;
 import net.dunrou.mobile.base.SuggestedUser;
 import net.dunrou.mobile.base.firebaseClass.FirebaseRelationship;
+import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
 import net.dunrou.mobile.fragment.DiscoverFragment;
 import net.dunrou.mobile.network.firebaseNetwork.FirebaseUtil;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 
 /**
  * Created by yvette on 2018/9/19.
@@ -35,31 +39,49 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
 
     private ArrayList<SuggestedUser> suggestedUsers_test;
     private ArrayList<SuggestedUser> suggestedUsers_top;
-    private ArrayList<SuggestedUser> suggestedUsers_people;
-    private ArrayList<FirebaseRelationship> relationships;
+    private ArrayList<SuggestedUser> suggestedUsers_commonFriends;
+    private ArrayList<SuggestedUser> suggestedUsers_search;
+
+    private ArrayList<FirebaseRelationship> allRelationships;
+    private ArrayList<SuggestedUser> allUsers;
+
+    public static final int COMMON_FRIENDS = 1;
+    public static final int TOP = 2;
+    public static final int TEST = 3;
+    public static final int SEARCH = 4;
+
+    public int suggestMode = COMMON_FRIENDS;
+
+    public static Comparator<SuggestedUser> valueComparator;
 
     public DiscoverUserAdapter() {}
 
     public DiscoverUserAdapter(Context context) {
         mContext = context;
+
         suggestedUsers_test = new ArrayList<>();
         suggestedUsers_top = new ArrayList<>();
-        suggestedUsers_people = new ArrayList<>();
+        suggestedUsers_commonFriends = new ArrayList<>();
+        suggestedUsers_search = new ArrayList<>();
 
-        relationships = new ArrayList<>();
+        allUsers = new ArrayList<>();
+        allRelationships = new ArrayList<>();
 
-        SuggestedUser user01 = new SuggestedUser("userID01");
-        SuggestedUser user02 = new SuggestedUser("userID02");
-        SuggestedUser user03 = new SuggestedUser("userID03");
+        valueComparator = new Comparator<SuggestedUser>() {
+            @Override
+            public int compare(SuggestedUser su1, SuggestedUser su2) {
+                return su2.getValue() - su1.getValue();
+            }
+        };
+
+        SuggestedUser user1 = new SuggestedUser("userID01");
         SuggestedUser user2 = new SuggestedUser("userID2", R.drawable.pm1);
         SuggestedUser user3 = new SuggestedUser("userID3", R.drawable.pokemon157);
         SuggestedUser user4 = new SuggestedUser("userID4", R.drawable.lx3);
         SuggestedUser user5 = new SuggestedUser("userID5", R.drawable.lx1);
         SuggestedUser user6 = new SuggestedUser("userID6", R.drawable.pokemon124);
         SuggestedUser user7 = new SuggestedUser("userID7");
-        suggestedUsers_test.add(user01);
-        suggestedUsers_test.add(user02);
-        suggestedUsers_test.add(user03);
+        suggestedUsers_test.add(user1);
         suggestedUsers_test.add(user2);
         suggestedUsers_test.add(user3);
         suggestedUsers_test.add(user4);
@@ -67,8 +89,8 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
         suggestedUsers_test.add(user6);
         suggestedUsers_test.add(user7);
 
-        new FirebaseUtil().getSuggestedUserInformation();
-        new FirebaseUtil().getRelationships(MainActivity.currentUserID);
+        new FirebaseUtil().setRelationshipsListener();
+        new FirebaseUtil().setUsersListener();
     }
 
     @Override
@@ -79,8 +101,32 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
 
     @Override
     public void onBindViewHolder(DiscoverUserViewHolder holder, int position) {
-        final SuggestedUser user = suggestedUsers_test.get(position);
+        final SuggestedUser user;
+
+        switch (suggestMode) {
+            case TOP:
+                user = suggestedUsers_top.get(position);
+                holder.mDescription_TV.setVisibility(View.VISIBLE);
+                break;
+            case COMMON_FRIENDS:
+                user = suggestedUsers_commonFriends.get(position);
+                holder.mDescription_TV.setVisibility(View.VISIBLE);
+                break;
+            case TEST:
+                user = suggestedUsers_test.get(position);
+                holder.mDescription_TV.setVisibility(View.GONE);
+                break;
+            case SEARCH:
+                user = suggestedUsers_search.get(position);
+                holder.mDescription_TV.setVisibility(View.GONE);
+                break;
+            default:
+                user = suggestedUsers_commonFriends.get(position);
+                holder.mDescription_TV.setVisibility(View.VISIBLE);
+        }
+
         holder.mUserID_TV.setText(user.getUserID());
+        holder.mDescription_TV.setText("  " + user.getValue() + user.getDescription());
         if(user.getAvatarID() != -1)
             holder.mAvatar_IV.setImageResource(user.getAvatarID());
         else
@@ -98,10 +144,10 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
         holder.mFollow_BT.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "click follow: " + MainActivity.currentUserID + " -> " + user.getUserID());
+                Log.d(TAG, "click follow: " + MainActivity.CURRENT_USERID + " -> " + user.getUserID());
                 Date date = Calendar.getInstance().getTime();
                 FirebaseRelationship firebaseRelationship = new FirebaseRelationship(
-                        null, MainActivity.currentUserID, user.getUserID(), date, true);
+                        null, MainActivity.CURRENT_USERID, user.getUserID(), date, true);
 
 //                TODO check existed or not
                 firebaseRelationInsertUpdate(firebaseRelationship);
@@ -111,10 +157,10 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
         holder.mUnfollow_BT.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "click unfollow: " + MainActivity.currentUserID + " -> " + user.getUserID());
+                Log.d(TAG, "click unfollow: " + MainActivity.CURRENT_USERID + " -> " + user.getUserID());
                 Date date = Calendar.getInstance().getTime();
                 FirebaseRelationship firebaseRelationship = new FirebaseRelationship(
-                        null, MainActivity.currentUserID, user.getUserID(), date, false);
+                        null, MainActivity.CURRENT_USERID, user.getUserID(), date, false);
 
 //                TODO check existed or not
                 firebaseRelationInsertUpdate(firebaseRelationship);
@@ -124,7 +170,233 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
 
     @Override
     public int getItemCount() {
-        return suggestedUsers_test.size();
+        switch (suggestMode) {
+            case TOP:
+                return suggestedUsers_top.size();
+            case COMMON_FRIENDS:
+                return suggestedUsers_commonFriends.size();
+            case TEST:
+                return suggestedUsers_test.size();
+            case SEARCH:
+                return suggestedUsers_search.size();
+            default:
+                return suggestedUsers_commonFriends.size();
+        }
+    }
+
+    /**
+     * add a user in allUses when child listener of firebase called.
+     */
+    public void addUser(FirebaseUser firebaseUser){
+        SuggestedUser suggestedUser = new SuggestedUser(firebaseUser.getUserID());
+        this.allUsers.add(suggestedUser);
+        Log.d(TAG, "addUser: " + suggestedUser.getUserID());
+        updateSuggested();
+    }
+
+    /**
+     * update a user in allUses when child listener of firebase called.
+     */
+    public void updateUser(FirebaseUser firebaseUser){
+        for(int i = 0; i < allUsers.size(); i++) {
+            if(allUsers.get(i).getUserID().equals(firebaseUser.getUserID())) {
+                allUsers.get(i).setAvatar(firebaseUser.getAvatar());
+                allUsers.get(i).setUserID(firebaseUser.getUserID());
+            }
+        }
+        updateSuggested();
+    }
+
+    /**
+     * remove a user in allUses when child listener of firebase called.
+     */
+    public void removeUser(FirebaseUser firebaseUser){
+        ArrayList<SuggestedUser> targets = new ArrayList<>();
+        for(SuggestedUser fu : allUsers) {
+            if(!fu.getUserID().equals(firebaseUser.getUserID()))
+                targets.add(fu);
+        }
+        allUsers = targets;
+        updateSuggested();
+    }
+
+    /**
+     * add a relationship in allRelationships when child listener of firebase called.
+     */
+    public void addRelationship(FirebaseRelationship firebaseRelationship) {
+        allRelationships.add(firebaseRelationship);
+        updateSuggested();
+    }
+
+    /**
+     * update a relationship in allRelationships when child listener of firebase called.
+     */
+    public void updateRelationship(FirebaseRelationship firebaseRelationship) {
+        for(int i = 0; i < allRelationships.size(); i ++) {
+            if(allRelationships.get(i).getRelationshipId().equals(firebaseRelationship.getRelationshipId())) {
+                allRelationships.set(i, firebaseRelationship);
+            }
+        }
+        updateSuggested();
+    }
+
+    /**
+     * add a relationship in allRelationships when child listener of firebase called.
+     */
+    public void removeRelationship(FirebaseRelationship firebaseRelationship) {
+        ArrayList<FirebaseRelationship> targets = new ArrayList<>();
+        for(FirebaseRelationship fr : allRelationships) {
+            if(!fr.getRelationshipId().equals(firebaseRelationship.getRelationshipId())) {
+                targets.add(fr);
+            }
+        }
+        allRelationships = targets;
+        updateSuggested();
+    }
+
+    /**
+     * update a user's isFollowed field in allUses when child listener of firebase called.
+     */
+    public void updateAllUsersRelations(){
+        for(SuggestedUser suggestedUser : this.allUsers) {
+            suggestedUser.setIsFollowed(false);
+            for(FirebaseRelationship firebaseRelationship : this.allRelationships) {
+                if(suggestedUser.getUserID().equals(firebaseRelationship.getFollowee())
+                        && firebaseRelationship.getFollower().equals(MainActivity.CURRENT_USERID)) {
+                    suggestedUser.setIsFollowed(firebaseRelationship.getStatus());
+                }
+            }
+        }
+    }
+
+    /**
+     * update all suggested user lists
+     */
+    public void updateSuggested() {
+        updateAllUsersRelations();
+
+        updateSuggestedUserTop();
+        updateSuggestedUserCommonFriends();
+        updateSuggestedUserTest();
+
+        reconstructSuggestedUsers();
+
+        notifyDataSetChanged();
+    }
+
+    /**
+     * insert or update a relation into firebase
+     * @param firebaseRelationship
+     */
+    public void firebaseRelationInsertUpdate(FirebaseRelationship firebaseRelationship) {
+        for(FirebaseRelationship relationship: allRelationships) {
+            if(relationship.getFollowee().equals(firebaseRelationship.getFollowee())
+                    && relationship.getFollower().equals(firebaseRelationship.getFollower())) {
+                firebaseRelationship.setRelationshipId(relationship.getRelationshipId());
+                new FirebaseUtil().updateRelationship(firebaseRelationship, true);
+                return;
+            }
+        }
+        new FirebaseUtil().updateRelationship(firebaseRelationship, false);
+    }
+
+    /**
+     * update suggestedUsers_commonFriends
+     */
+    public void updateSuggestedUserTop() {
+        //TODO updateSuggestedUserTop
+    }
+
+    /**
+     * update suggestedUsers_commonFriends
+     */
+    public void updateSuggestedUserTest() {
+        suggestedUsers_test = allUsers;
+    }
+
+    /**
+     * update suggestedUsers_commonFriends
+     */
+    public void updateSuggestedUserCommonFriends() {
+        HashMap<String, Boolean> friend = new HashMap<>();
+        for(FirebaseRelationship firebaseRelationship : this.allRelationships) {
+            if(firebaseRelationship.getFollower().equals(MainActivity.CURRENT_USERID)
+                    && firebaseRelationship.getStatus())
+                friend.put(firebaseRelationship.getFollowee(), firebaseRelationship.getStatus());
+        }
+//        resetSuggestedUserCommonFriends();
+        suggestedUsers_commonFriends.clear();
+        for(FirebaseRelationship firebaseRelationship : this.allRelationships) {
+            if(friend.containsKey(firebaseRelationship.getFollower()) && !friend.containsKey(firebaseRelationship.getFollowee()))
+                updateSuggestedUserCommonFriend(firebaseRelationship.getFollowee(), firebaseRelationship.getStatus());
+        }
+    }
+
+    /**
+     * update the value of a suggestedUsers_commonFriend in suggestedUsers_commonFriends
+     * @param userID
+     */
+    public void updateSuggestedUserCommonFriend(String userID, Boolean status) {
+        if(status && !userID.equals(MainActivity.CURRENT_USERID)) {
+            for(SuggestedUser suggestedUser : suggestedUsers_commonFriends) {
+                if(suggestedUser.getUserID().equals(userID)) {
+                    suggestedUser.setValue(suggestedUser.getValue() + 1);
+                    if(suggestedUser.getValue() > 1)
+                        suggestedUser.setDescription(" common friends");
+                    return;
+                }
+            }
+
+            for(SuggestedUser suggestedUser : allUsers) {
+                if(suggestedUser.getUserID().equals(userID)) {
+                    SuggestedUser suggestedUser_cf = new SuggestedUser(suggestedUser);
+                    suggestedUser_cf.setValue(1);
+                    suggestedUser_cf.setDescription(" common friend");
+                    suggestedUsers_commonFriends.add(suggestedUser_cf);
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
+     * set the values of all suggested user in suggestedUsers_commonFriends to zero
+     */
+    public void resetSuggestedUserCommonFriends() {
+        for(int i = 0; i < suggestedUsers_commonFriends.size(); i++) {
+            suggestedUsers_commonFriends.get(i).setValue(0);
+        }
+        for(SuggestedUser suggestedUser : suggestedUsers_commonFriends) {
+//            suggestedUser.setValue(0);
+            Log.d(TAG, "value after reset: " + suggestedUser.getValue());
+        }
+    }
+
+    /**
+     * remove item with value == 0
+     * sort the list based on the "value" field
+     */
+    public void reconstructSuggestedUsers() {
+        ArrayList<SuggestedUser> targets1 = new ArrayList<>();
+        for(int i = 0; i < suggestedUsers_commonFriends.size(); i++) {
+            if(suggestedUsers_commonFriends.get(i).getValue() != 0)
+                targets1.add(suggestedUsers_commonFriends.get(i));
+        }
+        suggestedUsers_commonFriends = targets1;
+        Collections.sort(suggestedUsers_commonFriends, valueComparator);
+
+        ArrayList<SuggestedUser> targets2 = new ArrayList<>();
+        for(int i = 0; i < suggestedUsers_top.size(); i++) {
+            if(suggestedUsers_top.get(i).getValue() != 0)
+                targets2.add(suggestedUsers_top.get(i));
+        }
+        suggestedUsers_top = targets2;
+        Collections.sort(suggestedUsers_top, valueComparator);
+
+        for(SuggestedUser suggestedUser : suggestedUsers_commonFriends)
+            Log.d(TAG, "suggest common: " + suggestedUser.getUserID() + " " + suggestedUser.getValue());
+        for(SuggestedUser suggestedUser : suggestedUsers_top)
+            Log.d(TAG, "suggest top: " + suggestedUser.getUserID() + " " + suggestedUser.getValue());
     }
 
     public static class DiscoverUserViewHolder extends RecyclerView.ViewHolder {
@@ -132,6 +404,7 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
         private final TextView mUserID_TV;
         private final Button mFollow_BT;
         private final Button mUnfollow_BT;
+        private final TextView mDescription_TV;
 
         private DiscoverUserViewHolder(View view) {
             super(view);
@@ -139,85 +412,12 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
             mUserID_TV = (TextView) view.findViewById(R.id.userID_TV);
             mFollow_BT = (Button) view.findViewById(R.id.follow_BT);
             mUnfollow_BT = (Button) view.findViewById(R.id.unfollow_BT);
+            mDescription_TV = (TextView) view.findViewById(R.id.description_TV);
         }
     }
 
-    public void addUser(SuggestedUser suggestedUser){
-        for(SuggestedUser user : suggestedUsers_test){
-            if(user.getUserID().equals(suggestedUser.getUserID()))
-                return;
-        }
-        suggestedUsers_test.add(suggestedUser);
-        this.notifyDataSetChanged();
+    public void setSuggestMode(int suggestMode) {
+        this.suggestMode = suggestMode;
+        notifyDataSetChanged();
     }
-
-    public static class NewUserEvent {
-
-        private final SuggestedUser suggestedUser;
-
-        public NewUserEvent(SuggestedUser suggestedUser) {
-            this.suggestedUser = suggestedUser;
-        }
-
-        public SuggestedUser getSuggestedUser() {
-            return suggestedUser;
-        }
-    }
-
-    public static class RelationAddedEvent {
-        private final FirebaseRelationship firebaseRelationship;
-
-        public RelationAddedEvent(FirebaseRelationship firebaseRelationship) {
-            this.firebaseRelationship = firebaseRelationship;
-        }
-
-        public FirebaseRelationship getFirebaseRelationship() {
-            return firebaseRelationship;
-        }
-    }
-
-    public static class RelationAddFailEvent {}
-
-    public static class UpdateRelationshipEvent {
-
-        private ArrayList<FirebaseRelationship> firebaseRelationships;
-
-        public UpdateRelationshipEvent(ArrayList<FirebaseRelationship> firebaseRelationships) {
-            this.firebaseRelationships = firebaseRelationships;
-        }
-
-        public ArrayList<FirebaseRelationship> getFirebaseRelationships() {
-            return firebaseRelationships;
-        }
-    }
-
-    public void setRelationship(ArrayList<FirebaseRelationship> firebaseRelationships) {
-        this.relationships = firebaseRelationships;
-
-        for(FirebaseRelationship firebaseRelationship : this.relationships) {
-            updateRelation(firebaseRelationship.getFollowee(), firebaseRelationship.getStatus());
-        }
-        this.notifyDataSetChanged();
-    }
-
-    public void updateRelation(String userID, Boolean isRelation) {
-        for (SuggestedUser suggestedUser : suggestedUsers_test) {
-            if (suggestedUser.getUserID().equals(userID))
-                suggestedUser.setFollowed(isRelation);
-//            Log.d(TAG, "updateRelation: " + suggestedUser.getUserID() + " " + suggestedUser.getIsFollowed());
-        }
-    }
-
-    public void firebaseRelationInsertUpdate(FirebaseRelationship firebaseRelationship) {
-        for(FirebaseRelationship relationship: relationships) {
-            if(relationship.getFollowee().equals(firebaseRelationship.getFollowee())) {
-                firebaseRelationship.setRelationshipId(relationship.getRelationshipId());
-                new FirebaseUtil().relationUpdate(firebaseRelationship, true);
-                return;
-            }
-        }
-        new FirebaseUtil().relationUpdate(firebaseRelationship, false);
-    }
-
-
 }

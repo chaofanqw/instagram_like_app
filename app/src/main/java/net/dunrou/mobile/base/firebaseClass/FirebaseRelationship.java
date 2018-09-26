@@ -1,5 +1,7 @@
 package net.dunrou.mobile.base.firebaseClass;
 
+import android.view.View;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -51,6 +53,21 @@ public class FirebaseRelationship {
 
         result.put("status", String.valueOf(status));
         return result;
+    }
+
+    public void fromMap(HashMap<String, Object> result){
+        this.relationshipId = (String) result.get("relationshipId");
+        this.follower = (String) result.get("follower");
+        this.followee = (String) result.get("followee");
+
+        Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").create();
+        this.time = gson.fromJson((String) result.get("time"), Date.class);
+
+        this.status = Boolean.valueOf((String)result.get("status"));
+
+        result.put("relationshipId", relationshipId);
+        result.put("follower", follower);
+        result.put("followee", followee);
     }
 
     public String getFollower() {

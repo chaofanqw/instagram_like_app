@@ -1,5 +1,7 @@
 package net.dunrou.mobile.base.firebaseClass;
 
+import android.net.Uri;
+
 import net.dunrou.mobile.base.converter.UriConverter;
 
 import org.greenrobot.greendao.annotation.Convert;
@@ -14,7 +16,9 @@ import java.util.HashMap;
 public class FirebaseUser {
     private String userID;
     private String password;
-    //private String avatar = "";
+    private URI avatar = new UriConverter().convertToEntityProperty("");
+
+    public FirebaseUser() {}
 
     public FirebaseUser(String userID, String password){
         this.userID = userID;
@@ -40,5 +44,11 @@ public class FirebaseUser {
     }
     public String getPassword() {
         return password;
+    }
+    public void setAvatar(URI avatar) {
+        this.avatar = avatar;
+    }
+    public URI getAvatar() {
+        return avatar;
     }
 }

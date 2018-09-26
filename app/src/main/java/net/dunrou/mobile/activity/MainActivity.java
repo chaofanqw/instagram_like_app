@@ -6,12 +6,9 @@ import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.lzy.imagepicker.ImagePicker;
 
 import net.dunrou.mobile.R;
 import net.dunrou.mobile.bean.BaseActivity;
@@ -34,7 +31,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private Fragment []mFragmensts;
 
     private final static String TAG = MainActivity.class.getSimpleName();
-    public static String currentUserID;
+    public static String CURRENT_USERID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,8 +41,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
         mFragmensts = DataGenerator.getFragments("TabLayout Tab");
         initView();
-        currentUserID = getIntent().getStringExtra("currentUserID");
-        Log.d(TAG, "currentUserID: " + currentUserID);
+        CURRENT_USERID = getIntent().getStringExtra("CURRENT_USERID");
+        Log.d(TAG, "CURRENT_USERID: " + CURRENT_USERID);
 
 
 
