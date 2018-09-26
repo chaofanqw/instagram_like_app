@@ -56,40 +56,40 @@ public class DiscoverMessage {
 
     public static class UserAddedEvent {
 
-        private final FirebaseUser firebaseUser;
+        private final SuggestedUser suggestedUser;
 
-        public UserAddedEvent(FirebaseUser firebaseUser) {
-            this.firebaseUser = firebaseUser;
+        public UserAddedEvent(SuggestedUser suggestedUser) {
+            this.suggestedUser = suggestedUser;
         }
 
-        public FirebaseUser getFirebaseUser() {
-            return firebaseUser;
+        public SuggestedUser getSuggestedUser() {
+            return suggestedUser;
         }
     }
 
     public static class UserChangedEvent {
 
-        private final FirebaseUser firebaseUser;
+        private final SuggestedUser suggestedUser;
 
-        public UserChangedEvent(FirebaseUser firebaseUser) {
-            this.firebaseUser = firebaseUser;
+        public UserChangedEvent(SuggestedUser suggestedUser) {
+            this.suggestedUser = suggestedUser;
         }
 
-        public FirebaseUser getFirebaseUser() {
-            return firebaseUser;
+        public SuggestedUser getSuggestedUser() {
+            return suggestedUser;
         }
     }
 
     public static class UserRemovedEvent {
 
-        private final FirebaseUser firebaseUser;
+        private final SuggestedUser suggestedUser;
 
-        public UserRemovedEvent(FirebaseUser firebaseUser) {
-            this.firebaseUser = firebaseUser;
+        public UserRemovedEvent(SuggestedUser suggestedUser) {
+            this.suggestedUser = suggestedUser;
         }
 
-        public FirebaseUser getFirebaseUser() {
-            return firebaseUser;
+        public SuggestedUser getSuggestedUser() {
+            return suggestedUser;
         }
     }
 

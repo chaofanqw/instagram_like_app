@@ -1,5 +1,7 @@
 package net.dunrou.mobile.base.converter;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 
 import org.greenrobot.greendao.converter.PropertyConverter;
@@ -14,6 +16,8 @@ public class UriConverter implements PropertyConverter<URI, String> {
     private Gson gson = new Gson();
     @Override
     public URI convertToEntityProperty(String databaseValue) {
+        if(databaseValue != null)
+            Log.d("uri test", databaseValue);
         return gson.fromJson(databaseValue, URI.class);
     }
 

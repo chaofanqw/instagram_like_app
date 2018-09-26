@@ -73,6 +73,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        EventBus.getDefault().register(this);
 //        Intent intent = new Intent(getActivity(), SearchableActivity.class);
 //        startActivity(intent);
     }
@@ -80,13 +81,12 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     @Override
     public void onResume() {
         super.onResume();
-        EventBus.getDefault().register(this);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        EventBus.getDefault().unregister(this);
+//        EventBus.getDefault().unregister(this);
     }
 
     @Override
@@ -204,17 +204,17 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onUserAddedEvent(DiscoverMessage.UserAddedEvent userAddedEvent) {
-        mDiscoverUserAdapter.addUser(userAddedEvent.getFirebaseUser());
+        mDiscoverUserAdapter.addUser(userAddedEvent.getSuggestedUser());
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onUserChangedEvent(DiscoverMessage.UserChangedEvent userChangedEvent) {
-        mDiscoverUserAdapter.updateUser(userChangedEvent.getFirebaseUser());
+        mDiscoverUserAdapter.updateUser(userChangedEvent.getSuggestedUser());
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onUserRemovedEvent(DiscoverMessage.UserRemovedEvent userRemovedEvent) {
-        mDiscoverUserAdapter.removeUser(userRemovedEvent.getFirebaseUser());
+        mDiscoverUserAdapter.removeUser(userRemovedEvent.getSuggestedUser());
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
