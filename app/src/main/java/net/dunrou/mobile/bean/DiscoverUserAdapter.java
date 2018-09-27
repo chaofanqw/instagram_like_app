@@ -75,21 +75,6 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
             }
         };
 
-        SuggestedUser user1 = new SuggestedUser("userID01");
-        SuggestedUser user2 = new SuggestedUser("userID2", R.drawable.pm1);
-        SuggestedUser user3 = new SuggestedUser("userID3", R.drawable.pokemon157);
-        SuggestedUser user4 = new SuggestedUser("userID4", R.drawable.lx3);
-        SuggestedUser user5 = new SuggestedUser("userID5", R.drawable.lx1);
-        SuggestedUser user6 = new SuggestedUser("userID6", R.drawable.pokemon124);
-        SuggestedUser user7 = new SuggestedUser("userID7");
-        suggestedUsers_test.add(user1);
-        suggestedUsers_test.add(user2);
-        suggestedUsers_test.add(user3);
-        suggestedUsers_test.add(user4);
-        suggestedUsers_test.add(user5);
-        suggestedUsers_test.add(user6);
-        suggestedUsers_test.add(user7);
-
         new FirebaseUtil().setRelationshipsListener();
         new FirebaseUtil().setUsersListener();
     }
@@ -102,7 +87,15 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
 
     @Override
     public void onBindViewHolder(DiscoverUserViewHolder holder, int position) {
-        final SuggestedUser user;
+        SuggestedUser user = initializeSuggestedModeUser(holder, position);
+        initializeHolderView(holder, user);
+
+        initializeFollowLogic(holder, user);
+        initializeUnfollowLogic(holder, user);
+    }
+
+    public SuggestedUser initializeSuggestedModeUser(DiscoverUserViewHolder holder, int position) {
+        SuggestedUser user;
 
         switch (suggestMode) {
             case TOP:
@@ -125,14 +118,16 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
                 user = suggestedUsers_commonFriends.get(position);
                 holder.mDescription_TV.setVisibility(View.VISIBLE);
         }
+        return user;
+    }
 
+    public void initializeHolderView(DiscoverUserViewHolder holder, SuggestedUser user) {
         holder.mUserID_TV.setText(user.getUserID());
-        holder.mDescription_TV.setText("  " + user.getValue() + user.getDescription());
-        if(user.getAvatarString() == "")
+        holder.mDescription_TV.setText(user.getValue() + user.getDescription());
+        if(user.getAvatarString().equals(""))
             holder.mAvatar_IV.setImageResource(R.drawable.profile_p);
         else {
             Picasso.with(mContext).load(user.getAvatarString()).fit().into(holder.mAvatar_IV);
-
         }
 
         if(user.getIsFollowed()) {
@@ -143,7 +138,9 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
             holder.mFollow_BT.setVisibility(View.VISIBLE);
             holder.mUnfollow_BT.setVisibility(View.GONE);
         }
+    }
 
+    public void initializeFollowLogic(DiscoverUserViewHolder holder, final SuggestedUser user) {
         holder.mFollow_BT.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -152,11 +149,12 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
                 FirebaseRelationship firebaseRelationship = new FirebaseRelationship(
                         null, MainActivity.CURRENT_USERID, user.getUserID(), date, true);
 
-//                TODO check existed or not
                 firebaseRelationInsertUpdate(firebaseRelationship);
             }
         });
+    }
 
+    public void initializeUnfollowLogic(DiscoverUserViewHolder holder, final SuggestedUser user) {
         holder.mUnfollow_BT.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -165,7 +163,6 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
                 FirebaseRelationship firebaseRelationship = new FirebaseRelationship(
                         null, MainActivity.CURRENT_USERID, user.getUserID(), date, false);
 
-//                TODO check existed or not
                 firebaseRelationInsertUpdate(firebaseRelationship);
             }
         });
@@ -192,7 +189,6 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
      */
     public void addUser(SuggestedUser user){
         this.allUsers.add(user);
-//        Log.d(TAG, "addUser: " + user.getUserID());
         updateSuggested();
     }
 
@@ -202,9 +198,6 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
     public void updateUser(SuggestedUser user){
         for(int i = 0; i < allUsers.size(); i++) {
             if(allUsers.get(i).getUserID().equals(user.getUserID())) {
-//                allUsers.get(i).setAvatar(user.getAvatar());
-//                allUsers.get(i).setUserID(user.getUserID());
-//                allUsers.get(i).setAvatarString(user.getAvatarString());
                 allUsers.set(i, user);
             }
         }
@@ -273,10 +266,8 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
             Boolean isFollowed = allUsers.get(userMap.get(searchUsers.get(i).getUserID())).getIsFollowed();
             suggestedUsers_search.get(i).setIsFollowed(isFollowed);
         }
-
         updateSuggested();
     }
-
 
     /**
      * update a user's isFollowed field in allUses when child listener of firebase called.
@@ -335,6 +326,10 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
                 for(SuggestedUser user : allUsers) {
                     if(user.getUserID().equals(firebaseRelationship.getFollowee()))
                         user.setValue(user.getValue() + 1);
+                    if(user.getValue() > 1)
+                        user.setDescription(" followers");
+                    else
+                        user.setDescription(" follower");
                 }
             }
         }
@@ -372,7 +367,6 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
                     && firebaseRelationship.getStatus())
                 friend.put(firebaseRelationship.getFollowee(), firebaseRelationship.getStatus());
         }
-//        resetSuggestedUserCommonFriends();
         suggestedUsers_commonFriends.clear();
         for(FirebaseRelationship firebaseRelationship : this.allRelationships) {
             if(friend.containsKey(firebaseRelationship.getFollower()) && !friend.containsKey(firebaseRelationship.getFollowee()))

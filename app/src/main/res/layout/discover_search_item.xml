@@ -51,7 +51,7 @@
             android:id="@+id/description_TV"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
+            android:layout_marginLeft="30dp"
             android:text="TextView" />
     </LinearLayout>
 
