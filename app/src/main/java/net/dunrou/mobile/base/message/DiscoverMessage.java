@@ -6,6 +6,10 @@ import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
 
 import java.util.ArrayList;
 
+/**
+ * Created by yvette on 2018/9/24.
+ */
+
 public class DiscoverMessage {
     public static class RelationAddedEvent {
         private final FirebaseRelationship firebaseRelationship;

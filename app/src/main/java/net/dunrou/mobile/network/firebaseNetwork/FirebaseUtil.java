@@ -173,7 +173,6 @@ public class FirebaseUtil {
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-//                        EventBus.getDefault().post(new DiscoverUserAdapter.RelationAddedEvent(firebaseRelationship));
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -189,29 +188,6 @@ public class FirebaseUtil {
         myRef = database.getReference("relationship");
 
         Query query  = myRef.orderByChild("follower");
-
-        //TODO can not listen the whole relationship be deleted
-//        query.addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                Iterator<DataSnapshot> set = dataSnapshot.getChildren().iterator();
-////                Log.d(TAG, "setRelationshipsListener.onDataChange called");
-//
-//                while(set.hasNext()){
-//                    DataSnapshot tempDataSnapshot = set.next();
-//                    HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
-//                    FirebaseRelationship firebaseRelationship = new FirebaseRelationship();
-//                    firebaseRelationship.fromMap(result);
-//                    EventBus.getDefault().post(new DiscoverMessage.RelationshipAddedEvent(firebaseRelationship));
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//                Log.d("result", "ValueEventListener onCancelled: error");
-//            }
-//        });
-
         query.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
@@ -258,27 +234,6 @@ public class FirebaseUtil {
         myRef = database.getReference("user");
 
         Query query  = myRef.orderByChild("userID");
-
-//        query.addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                Iterator<DataSnapshot> set = dataSnapshot.getChildren().iterator();
-//
-//                while(set.hasNext()){
-//                    DataSnapshot tempDataSnapshot = set.next();
-//                    HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
-//                    FirebaseUser firebaseUser = new FirebaseUser();
-//                    firebaseUser.setUserID((String) result.get("userID"));
-//                    EventBus.getDefault().post(new DiscoverMessage.UserAddedEvent(firebaseUser));
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//                Log.d(TAG, "ValueEventListener onCancelled: error");
-//            }
-//        });
-
         query.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
