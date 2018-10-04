@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingBottom="9.5dp"
+        android:paddingStart="12.5dp"
+        android:paddingEnd="18.5dp"
+        android:paddingTop="12.5dp">
+
+        <com.lzy.widget.CircleImageView
+            android:id="@+id/avatar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_default_color"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_username"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="Unknown User"
+                android:layout_marginBottom="5dp"
+                android:textColor="#6b8747"
+                android:textSize="14sp"/>
+
+            <TextView
+                android:id="@+id/information"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"/>
+
+            <TextView
+                android:id="@+id/self_like"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"/>
+
+            <TextView
+                android:id="@+id/post_index"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"/>
+
+            <TextView
+                android:id="@+id/tv_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="false"
+                android:text="Blank Content"
+                android:textColor="#505050"
+                android:textSize="14sp"/>
+
+            <com.lzy.ninegrid.NineGridView
+                android:id="@+id/nineGrid"
+                app:ngv_mode="grid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingEnd="5dp"
+                android:paddingTop="10dp"
+                tools:ignore="RtlSymmetry" />
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tv_createTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="9dp"
+                    android:text="2018-09-20 12:00"
+                    android:textColor="#8e8e8e"
+                    android:textSize="12sp"/>
+
+                <!--<TextView-->
+                    <!--android:id="@+id/delete"-->
+                    <!--android:layout_width="wrap_content"-->
+                    <!--android:layout_height="wrap_content"-->
+                    <!--android:layout_marginStart="20dp"-->
+                    <!--android:layout_marginTop="9dp"-->
+                    <!--android:layout_toEndOf="@id/tv_createTime"-->
+                    <!--android:text="Delete"-->
+                    <!--android:textColor="#883A5FCD"-->
+                    <!--android:textSize="12sp"/>-->
+
+                <LinearLayout
+                    android:id="@+id/comment_pad"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="9dp"
+                    android:paddingEnd="5dp"
+                    android:layout_alignParentEnd="true"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/comment_button"
+                        android:layout_width="25dp"
+                        android:layout_height="20dp"
+                        android:gravity="center"
+                        android:layout_marginEnd="3dp"
+                        android:src="@drawable/comment"/>
+
+                    <TextView
+                        android:id="@+id/comment_number"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:textSize="12sp"
+                        android:textColor="#8e8e8e"
+                        android:text="0"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/like_pad"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="9dp"
+                    android:paddingEnd="5dp"
+                    android:layout_marginEnd="5dp"
+                    android:layout_toStartOf="@+id/comment_pad"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/like_button"
+                        android:layout_width="25dp"
+                        android:layout_height="20dp"
+                        android:gravity="center"
+                        android:layout_marginEnd="3dp"
+                        android:src="@drawable/like_n"/>
+
+                    <TextView
+                        android:id="@+id/like_number"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:textSize="12sp"
+                        android:textColor="#8e8e8e"
+                        android:text="0"/>
+
+                </LinearLayout>
+
+                <!--<ImageView-->
+                    <!--android:id="@+id/more"-->
+                    <!--android:layout_width="wrap_content"-->
+                    <!--android:layout_height="wrap_content"-->
+                    <!--android:layout_alignParentEnd="true"-->
+                    <!--android:layout_centerVertical="true"-->
+                    <!--android:background="@mipmap/feed_more"/>-->
+            </RelativeLayout>
+
+            <!--<com.lzy.widget.ExpandListView-->
+                <!--android:id="@+id/lv_comments"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_marginEnd="5dp"-->
+                <!--android:layout_marginTop="9.5dp"-->
+                <!--android:background="@drawable/event_di"-->
+                <!--android:divider="@null"-->
+                <!--android:dividerHeight="0dp"-->
+                <!--android:orientation="vertical"-->
+                <!--android:paddingBottom="5dp"-->
+                <!--android:paddingLeft="8dp"-->
+                <!--android:paddingRight="8dp"-->
+                <!--android:paddingTop="16dp"/>-->
+            <com.lzy.widget.ExpandListView
+                android:id="@+id/lv_comments"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
+                android:background="@drawable/event_di"
+                android:divider="@null"
+                android:dividerHeight="0dp"
+                android:orientation="vertical"
+                android:paddingBottom="8dp"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingTop="16dp"
+                android:layout_marginBottom="8dp"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

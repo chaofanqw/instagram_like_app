@@ -27,6 +27,7 @@ public class FirebaseEventLike {
         this.time = time;
         this.status = status;
     }
+
     public FirebaseEventLike() {
     }
 

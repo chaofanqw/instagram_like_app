@@ -13,7 +13,7 @@ import java.util.List;
  */
 
 public class EventCommentUtil {
-    private static EventCommentUtil eventCommentUtil;
+    private static volatile EventCommentUtil eventCommentUtil;
     private DatabaseManager databaseManager;
 
     private EventCommentUtil(Context context){

@@ -40,7 +40,8 @@
         android:hint="@string/share_the_moment"
         android:gravity="top"
         android:background="@null"
-        android:lines="5"
+        android:inputType="textShortMessage"
+        android:layout_marginBottom="80dp"
         />
 
     <LinearLayout
@@ -48,7 +49,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_marginBottom="@dimen/activity_vertical_margin"
-        android:layout_marginLeft="3dp"
+        android:layout_marginStart="3dp"
         android:id="@+id/geo_locate">
 
         <ImageView

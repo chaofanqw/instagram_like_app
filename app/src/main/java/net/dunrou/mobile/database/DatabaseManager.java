@@ -14,7 +14,7 @@ public class DatabaseManager {
 
     private DaoMaster.DevOpenHelper helper;
     private DaoMaster daoMaster;
-    private static DatabaseManager databaseManager;
+    private static volatile DatabaseManager databaseManager;
 
 
     private DatabaseManager(Context context) {
