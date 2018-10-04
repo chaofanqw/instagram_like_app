@@ -456,7 +456,7 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
         for(int i = 0; i < suggestedUsers_top.size(); i++) {
             if(suggestedUsers_top.get(i).getValue() != 0
                     && !suggestedUsers_top.get(i).getIsFollowed()
-                    && suggestedUsers_top.get(i).getUserID() != MainActivity.CURRENT_USERID)
+                    && !suggestedUsers_top.get(i).getUserID().equals(MainActivity.CURRENT_USERID))
                 targets2.add(suggestedUsers_top.get(i));
         }
         suggestedUsers_top = targets2;
