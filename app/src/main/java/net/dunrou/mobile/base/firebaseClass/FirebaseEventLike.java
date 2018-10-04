@@ -3,8 +3,10 @@ package net.dunrou.mobile.base.firebaseClass;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -83,5 +85,21 @@ public class FirebaseEventLike {
     public void setStatus(Boolean status) {
         this.status = status;
     }
+
+    public void fromMap(HashMap<String, Object> result) {
+        this.eventPostId = (String) result.get("eventPostId");
+        this.eventLikeId = (String) result.get("eventLikeId");
+        this.userId = (String) result.get("userId");
+
+
+        this.status = Boolean.valueOf((String)result.get("status"));
+
+
+        Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").create();
+        this.time = gson.fromJson((String) result.get("time"), Date.class);
+
+
+    }
+
 
 }

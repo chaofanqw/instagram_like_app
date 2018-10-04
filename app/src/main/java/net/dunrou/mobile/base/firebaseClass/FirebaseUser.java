@@ -1,5 +1,7 @@
 package net.dunrou.mobile.base.firebaseClass;
 
+import android.util.Log;
+
 import net.dunrou.mobile.base.converter.UriConverter;
 
 import java.net.URI;
@@ -47,4 +49,18 @@ public class FirebaseUser {
     public URI getAvatar() {
         return avatar;
     }
+
+
+
+    public void fromMap(HashMap<String, Object> result){
+        this.userID = ((String) result.get("userID"));
+        this.password = ((String) result.get("password"));
+        if(result.get("avatar") != null) {
+            this.avatar = (URI.create((String) result.get("avatar")));
+
+            Log.d("avatar", (String) result.get("avatar"));
+        }
+
+    }
+
 }

@@ -8,9 +8,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import net.dunrou.mobile.R;
+import net.dunrou.mobile.fragment.ActivityFeedFragment;
 import net.dunrou.mobile.fragment.DiscoverFragment;
 import net.dunrou.mobile.fragment.HomeFragment;
 import net.dunrou.mobile.fragment.PhotoFragment;
+import net.dunrou.mobile.fragment.ProfileFragment;
 
 /**
  * Created by Stephen on 2018/8/29.
@@ -31,8 +33,8 @@ public class DataGenerator {
         fragments[0] = HomeFragment.newInstance();
         fragments[1] = DiscoverFragment.newInstance();
         fragments[2] = null;
-        fragments[3] = HomeFragment.newInstance();
-        fragments[4] = HomeFragment.newInstance();
+        fragments[3] = ActivityFeedFragment.newInstance();
+        fragments[4] = ProfileFragment.newInstance();
         return fragments;
     }
 

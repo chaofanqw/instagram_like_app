@@ -291,7 +291,7 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
     private void publishMessage(){
         String information = informationView.getText().toString();
         Date date = Calendar.getInstance().getTime();
-        FirebaseEventPost firebaseEventPost = new FirebaseEventPost(null, "1", information, paths, location, date);
+        FirebaseEventPost firebaseEventPost = new FirebaseEventPost(null, MainActivity.CURRENT_USERID, information, paths, location, date);
         new FirebaseUtil().EventPostInsert(firebaseEventPost);
     }
 

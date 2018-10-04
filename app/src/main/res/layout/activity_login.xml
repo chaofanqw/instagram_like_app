@@ -76,7 +76,7 @@
                         android:inputType="textEmailAddress"
                         android:maxLines="1"
                         android:singleLine="true"
-                        android:text="123@"/>
+                        android:text="1@gmail.com"/>
 
                 </android.support.design.widget.TextInputLayout>
 
