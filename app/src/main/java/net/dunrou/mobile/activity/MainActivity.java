@@ -16,6 +16,7 @@ import com.lzy.imagepicker.ImagePicker;
 import net.dunrou.mobile.R;
 import net.dunrou.mobile.bean.BaseActivity;
 import net.dunrou.mobile.bean.DataGenerator;
+import net.dunrou.mobile.fragment.HomeFragment;
 import net.dunrou.mobile.network.HttpResult;
 import net.dunrou.mobile.network.InsNetwork;
 import net.dunrou.mobile.network.InsService;
@@ -168,6 +169,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             if(requestCode == PHOTO_TAKE){
                 if(data.getBooleanExtra(PHOTO_INFO, false)){
                     onPhotoSuccess();
+                    ((HomeFragment) mFragmensts[0]).initData();
                 }
             }
         }

@@ -5,16 +5,14 @@ import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
-import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -27,21 +25,11 @@ import net.dunrou.mobile.R;
 import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
 import net.dunrou.mobile.base.message.LoginMessage;
 import net.dunrou.mobile.bean.BaseActivity;
-import net.dunrou.mobile.network.HttpResult;
-import net.dunrou.mobile.network.InsNetwork;
-import net.dunrou.mobile.network.InsService;
-import net.dunrou.mobile.network.RetrofitUtil;
 import net.dunrou.mobile.network.firebaseNetwork.FirebaseUtil;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-
-import io.reactivex.Observable;
-import io.reactivex.Observer;
-import io.reactivex.disposables.Disposable;
-
-import static android.Manifest.permission.READ_CONTACTS;
 
 /**
  * A login screen that offers login via email/password.
@@ -59,19 +47,21 @@ public class LoginActivity extends BaseActivity {
     private View mProgressView;
     private Button mEmailSignInButton;
 
-    private TextView mSignupView;
+    private TextView mSignUpView;
     private TextView mRegisterView;
 
     private View mLoginOrRegisterView;
     private MaterialDialog materialDialog;
+
+    private SharedPreferences userInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         // Set up the login form.
+        userInfo = getSharedPreferences("UserInfo", MODE_PRIVATE);
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
-
         mPasswordView = (EditText) findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -96,7 +86,7 @@ public class LoginActivity extends BaseActivity {
         mLoginOrRegisterView.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                flag = flag == 0 ? 1:0;
+                flag = flag == 0 ? 1 : 0;
                 loginOrRegister();
                 mEmailView.setText("");
                 mPasswordView.setText("");
@@ -104,9 +94,9 @@ public class LoginActivity extends BaseActivity {
         });
 
         mProgressView = findViewById(R.id.login_progress);
-        mSignupView = findViewById(R.id.signup_switch);
+        mSignUpView = findViewById(R.id.signup_switch);
         mRegisterView = findViewById(R.id.register_switch);
-
+        loginOrRegister();
         EventBus.getDefault().register(this);
     }
 
@@ -116,17 +106,24 @@ public class LoginActivity extends BaseActivity {
         EventBus.getDefault().unregister(this);
     }
 
-    private void loginOrRegister(){
-        if (flag == 0){
+    private void loginOrRegister() {
+        if (flag == 0) {
             mEmailSignInButton.setText(R.string.action_sign_in_short);
-            mSignupView.setTextColor(getResources().getColor(R.color.white));
-            mSignupView.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+            mSignUpView.setTextColor(getResources().getColor(R.color.white));
+            mSignUpView.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
             mRegisterView.setTextColor(getResources().getColor(R.color.colorPrimary));
             mRegisterView.setBackgroundColor(getResources().getColor(R.color.backgroundNone));
-        }else{
+            String username = userInfo.getString("username", null);
+            if (username != null) {
+                mEmailView.setText(username);
+                mPasswordView.requestFocus();
+            } else {
+                mEmailView.requestFocus();
+            }
+        } else {
             mEmailSignInButton.setText(R.string.action_sign_up);
-            mSignupView.setTextColor(getResources().getColor(R.color.colorPrimary));
-            mSignupView.setBackgroundColor(getResources().getColor(R.color.backgroundNone));
+            mSignUpView.setTextColor(getResources().getColor(R.color.colorPrimary));
+            mSignUpView.setBackgroundColor(getResources().getColor(R.color.backgroundNone));
             mRegisterView.setTextColor(getResources().getColor(R.color.white));
             mRegisterView.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
         }
@@ -152,8 +149,12 @@ public class LoginActivity extends BaseActivity {
         View focusView = null;
 
         // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
-            mPasswordView.setError(getString(R.string.error_invalid_password));
+        if (!isPasswordValid(password)) {
+            if (password.length() < 6) {
+                mPasswordView.setError(getString(R.string.error_too_short_password));
+            } else if (password.length() > 16) {
+                mPasswordView.setError(getString(R.string.error_too_long_password));
+            }
             focusView = mPasswordView;
             cancel = true;
         }
@@ -177,8 +178,8 @@ public class LoginActivity extends BaseActivity {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             if (flag == 0) {
-                vertifcation(email, password);
-            }else{
+                verification(email, password);
+            } else {
                 register(email, password);
             }
         }
@@ -186,12 +187,12 @@ public class LoginActivity extends BaseActivity {
 
     private boolean isEmailValid(String email) {
         //Replace this with your own logic
-        return email.contains("@");
+        return email.matches("^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+\\.[a-zA-Z0-9_-]+$");
     }
 
     private boolean isPasswordValid(String password) {
         //Replace this with your own logic
-        return password.length() > 4;
+        return password.matches("^.{6,16}$");
     }
 
     /**
@@ -221,35 +222,55 @@ public class LoginActivity extends BaseActivity {
         }
     }
 
-    private void vertifcation(String email, String password){
-        materialDialog = new  MaterialDialog.Builder(this)
-                .title("Registering account")
+    private void verification(String email, String password) {
+        materialDialog = new MaterialDialog.Builder(this)
+                .title("Logging in account")
                 .content("Please wait for a moment")
                 .progress(true, 0)
                 .show();
         new FirebaseUtil().getUser(new FirebaseUser(email, password));
-
     }
 
-    private void register(String email, String password){
-        materialDialog = new  MaterialDialog.Builder(this)
+    private void register(String email, String password) {
+        materialDialog = new MaterialDialog.Builder(this)
                 .title("Registering account")
                 .content("Please wait for a moment")
                 .progress(true, 0)
                 .show();
-
         new FirebaseUtil().UserInsert(new FirebaseUser(email, password));
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onLoginMessage(LoginMessage loginMessage){
+    public void onLoginMessage(LoginMessage loginMessage) {
         materialDialog.dismiss();
+        mEmailView.setError(null);
+        mPasswordView.setError(null);
 
-        if(loginMessage.isSuccess()){
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
-        }else{
-            Toast.makeText(this, "Something wrong!", Toast.LENGTH_SHORT).show();
+        if (loginMessage.isSuccess()) {
+            if (loginMessage.getStatus() == 0) {
+                Toast.makeText(this, "Registration Successful!", Toast.LENGTH_LONG).show();
+                SharedPreferences.Editor editor = userInfo.edit();
+                editor.putString("username", loginMessage.getUserID()).apply();
+                flag = 0;
+                loginOrRegister();
+            } else {
+                SharedPreferences.Editor editor = userInfo.edit();
+                editor.putString("username", loginMessage.getUserID()).apply();
+                Intent intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        } else {
+            if (loginMessage.getStatus() == 1) {
+                Toast.makeText(this, "Username or password is not correct!", Toast.LENGTH_LONG).show();
+            } else {
+                if (loginMessage.getUserID().equals("")) {
+                    Toast.makeText(this, "Please try again later!", Toast.LENGTH_LONG).show();
+                } else {
+                    mEmailView.setError(getString(R.string.error_username_exists));
+                    mEmailView.requestFocus();
+                }
+            }
         }
     }
 }

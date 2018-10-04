@@ -8,7 +8,8 @@
     <string name="action_sign_in">Sign in or register</string>
     <string name="action_sign_in_short">Sign in</string>
     <string name="error_invalid_email">This email address is invalid</string>
-    <string name="error_invalid_password">This password is too short</string>
+    <string name="error_too_short_password">This password is too short</string>
+    <string name="error_too_long_password">This password is too long</string>
     <string name="error_incorrect_password">This password is incorrect</string>
     <string name="error_field_required">This field is required</string>
     <string name="permission_rationale">"Contacts permissions are needed for providing email
@@ -25,5 +26,8 @@
 
     <string name="app_label">app_label</string>
     <string name="search_hint">Search user</string>
+    <string name="remove_tip">Are you sure you want to remove it?</string>
+    <string name="remove_tip_title">Tip</string>
+    <string name="error_username_exists">The username already exists!</string>
 
 </resources>

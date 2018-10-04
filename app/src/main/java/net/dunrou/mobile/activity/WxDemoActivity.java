@@ -2,13 +2,16 @@ package net.dunrou.mobile.activity;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.InputType;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
@@ -81,6 +84,8 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
     private ArrayList<String> paths = new ArrayList<>();
     private Location location = null;
 
+    private SharedPreferences userInfo;
+
     @BindView(R.id.location)
     TextView locationView;
     @BindView(R.id.information_text)
@@ -91,6 +96,7 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wxdemo);
         ButterKnife.bind(this);
+        userInfo = getSharedPreferences("UserInfo", MODE_PRIVATE);
         EventBus.getDefault().register(this);
 
         //最好放到 Application oncreate执行
@@ -124,6 +130,13 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
         selImageList = new ArrayList<>();
         adapter = new ImagePickerAdapter(this, selImageList, maxImgCount);
         adapter.setOnItemClickListener(this);
+        informationView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                publishImages();
+                return false;
+            }
+        });
 
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
         recyclerView.setHasFixedSize(true);
@@ -291,7 +304,8 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
     private void publishMessage(){
         String information = informationView.getText().toString();
         Date date = Calendar.getInstance().getTime();
-        FirebaseEventPost firebaseEventPost = new FirebaseEventPost(null, "1", information, paths, location, date);
+        String username = userInfo.getString("username", "1");
+        FirebaseEventPost firebaseEventPost = new FirebaseEventPost(null, username, information, paths, location, date);
         new FirebaseUtil().EventPostInsert(firebaseEventPost);
     }
 

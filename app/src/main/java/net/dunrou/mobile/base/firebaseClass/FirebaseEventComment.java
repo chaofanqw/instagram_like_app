@@ -14,16 +14,15 @@ import java.util.Map;
 public class FirebaseEventComment {
     private String eventCommentId;
     private String userId;
-    private Long eventPostId;
+    private String eventPostId;
     private String comment;
     private Date time;
 
     public FirebaseEventComment() {
     }
 
-    public FirebaseEventComment(String eventCommentId, String userId, Long eventPostId,
+    public FirebaseEventComment(String userId, String eventPostId,
                         String comment, Date time) {
-        this.eventCommentId = eventCommentId;
         this.userId = userId;
         this.eventPostId = eventPostId;
         this.comment = comment;
@@ -35,7 +34,7 @@ public class FirebaseEventComment {
 
         this.eventCommentId = eventCommentId;
         this.userId = userId;
-        this.eventPostId = Long.parseLong(eventPostId);
+        this.eventPostId = eventPostId;
         this.comment = comment;
 
         Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").create();
@@ -50,7 +49,7 @@ public class FirebaseEventComment {
         result.put("comment", comment);
 
         Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").create();
-        result.put("time", time);
+        result.put("time", gson.toJson(time));
         return result;
     }
 
@@ -66,10 +65,10 @@ public class FirebaseEventComment {
     public void setUserId(String userId) {
         this.userId = userId;
     }
-    public Long getEventPostId() {
+    public String getEventPostId() {
         return this.eventPostId;
     }
-    public void setEventPostId(Long eventPostId) {
+    public void setEventPostId(String eventPostId) {
         this.eventPostId = eventPostId;
     }
     public String getComment() {
