@@ -2,7 +2,6 @@ package net.dunrou.mobile.base.message;
 
 import net.dunrou.mobile.base.SuggestedUser;
 import net.dunrou.mobile.base.firebaseClass.FirebaseRelationship;
-import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
 
 import java.util.ArrayList;
 
@@ -106,6 +105,33 @@ public class DiscoverMessage {
 
         public ArrayList<SuggestedUser> getSuggestedUsers() {
             return suggestedUsers;
+        }
+    }
+
+    public static class BTSendImagesEvent {
+        private final String path;
+
+        public BTSendImagesEvent(String path) {
+            this.path = path;
+        }
+
+        public String getPath() {
+            return path;
+        }
+    }
+
+    public static class BTConnectionLostEvent {
+    }
+
+    public static class BTReceiveImagesEvent {
+        private final String path;
+
+        public BTReceiveImagesEvent(String path) {
+            this.path = path;
+        }
+
+        public String getPath() {
+            return path;
         }
     }
 }

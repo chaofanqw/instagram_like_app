@@ -20,6 +20,7 @@ import net.dunrou.mobile.R;
 import net.dunrou.mobile.bean.BaseActivity;
 import net.dunrou.mobile.bean.DataGenerator;
 import net.dunrou.mobile.bean.IGetLocation;
+import net.dunrou.mobile.fragment.DiscoverFragment;
 import net.dunrou.mobile.fragment.HomeFragment;
 import net.dunrou.mobile.network.HttpResult;
 import net.dunrou.mobile.network.InsNetwork;

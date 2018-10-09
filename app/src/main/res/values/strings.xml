@@ -29,5 +29,6 @@
     <string name="remove_tip">Are you sure you want to remove it?</string>
     <string name="remove_tip_title">Tip</string>
     <string name="error_username_exists">The username already exists!</string>
+    <string name="title_activity_bluetooth">BluetoothActivity</string>
 
 </resources>

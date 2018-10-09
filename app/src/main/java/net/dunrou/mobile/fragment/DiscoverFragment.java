@@ -1,11 +1,25 @@
 package net.dunrou.mobile.fragment;
 
+import android.app.Dialog;
 import android.app.Fragment;
 import android.app.SearchManager;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothHeadset;
+import android.bluetooth.BluetoothProfile;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.TabLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -13,21 +27,33 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.afollestad.materialdialogs.MaterialDialog;
+import com.squareup.picasso.Picasso;
 
 import net.dunrou.mobile.R;
 import net.dunrou.mobile.base.message.DiscoverMessage;
+import net.dunrou.mobile.bean.BTServerThread;
+import net.dunrou.mobile.bean.BluetoothDeviceAdapter;
 import net.dunrou.mobile.bean.DiscoverUserAdapter;
 import net.dunrou.mobile.network.firebaseNetwork.FirebaseUtil;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.UUID;
 //import net.dunrou.mobile.activity.SearchableActivity;
 
 /**
@@ -36,6 +62,7 @@ import org.greenrobot.eventbus.ThreadMode;
 
 public class DiscoverFragment extends Fragment implements SearchView.OnQueryTextListener {
     private transient final static String TAG = DiscoverFragment.class.getSimpleName();
+    private static final int REQUEST_ENABLE_BT = 1;
 
     private View mView;
 
@@ -53,6 +80,64 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     private TabLayout.Tab tab_commonFriend;
     private TabLayout.Tab tab_nearby;
 
+    private BluetoothAdapter mBluetoothAdapter;
+    private Set<BluetoothDevice> pairedDevices;
+    private ArrayList<BluetoothDevice> mDiscoverableDevices = new ArrayList<>();
+    private BluetoothHeadset mBluetoothHeadset;
+
+    private BluetoothDeviceAdapter  mBluetoothDeviceAdapter;
+
+    private ArrayList<String> mPermissions_list;
+    private String[] mPermissions_array;
+
+    public static int DISCOVERABLE_TIME_SHORT = 300;
+
+    public static final UUID MY_UUID = UUID.fromString("0811c45b-e99b-49dd-a6ac-dc5e262e254d");
+
+
+
+    private BluetoothProfile.ServiceListener mProfileListener = new BluetoothProfile.ServiceListener() {
+        @Override
+        public void onServiceConnected(int profile, BluetoothProfile proxy) {
+            if (profile == BluetoothHeadset.HEADSET) {
+                mBluetoothHeadset = (BluetoothHeadset) proxy;
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(int profile) {
+            if (profile == BluetoothHeadset.HEADSET) {
+                mBluetoothHeadset = null;
+            }
+        }
+    };
+
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "onReceive called");
+            Boolean isExisted = false;
+            String action = intent.getAction();
+            if(BluetoothDevice.ACTION_FOUND.equals(action)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+
+                Log.d(TAG, "get device: " + device.getName() + " " + device.getAddress() + " " + device.getUuids());
+                for(BluetoothDevice device1: mDiscoverableDevices) {
+                    if (device1.getAddress().equals(device.getAddress()))
+                        isExisted = true;
+                    break;
+                }
+                if(!isExisted)
+                {
+//                    TODO filter out non project bt
+                    mDiscoverableDevices.add(device);
+                    mBluetoothDeviceAdapter.setBluetoothDevices(mDiscoverableDevices);
+                }
+
+            }
+        }
+    };
+
     public DiscoverFragment() {
     }
 
@@ -66,8 +151,20 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mContext = getActivity().getApplicationContext();
+        mContext = this.getActivity();
         EventBus.getDefault().register(this);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getAllPermissions();
+        }
+
+        setupBT();
+        setupProfile();
+        setPairedDevices();
+        startDiscoverDevices();
+        setupDiscoverable(DISCOVERABLE_TIME_SHORT);
+        startDiscover();
+        startBTServerThread();
     }
 
     @Override
@@ -78,11 +175,18 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     @Override
     public void onResume() {
         super.onResume();
+        if (mDiscoverUserAdapter.getSuggestMode() == DiscoverUserAdapter.TEST) {
+            startDiscoverDevices();
+        }
+
+
     }
 
     @Override
     public void onStop() {
         super.onStop();
+        if (mDiscoverUserAdapter.getSuggestMode() == DiscoverUserAdapter.TEST)
+            stopDiscoverDevices();
     }
 
     @Override
@@ -116,6 +220,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
                 switch(tab.getPosition()) {
                     case 0:
                         Log.d(TAG, "click top");
+                        mResults_RV.setAdapter(mDiscoverUserAdapter);
                         mSearch_SV.clearFocus();
                         mSearch_SV.setQuery("", false);
                         mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.TOP);
@@ -123,6 +228,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
                         break;
                     case 1:
                         Log.d(TAG, "click people");
+                        mResults_RV.setAdapter(mDiscoverUserAdapter);
                         mSearch_SV.clearFocus();
                         mSearch_SV.setQuery("", false);
                         mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.COMMON_FRIENDS);
@@ -130,10 +236,13 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
                         break;
                     case 2:
                         Log.d(TAG, "click nearby");
-                        mSearch_SV.clearFocus();
-                        mSearch_SV.setQuery("", false);
+//                        Intent intent = new Intent(mContext, BluetoothActivity.class);
+//                        startActivity(intent);
+//                        mSearch_SV.clearFocus();
+//                        mSearch_SV.setQuery("", false);
                         mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.TEST);
-                        mSearchUser_TV.setVisibility(View.GONE);
+                        mResults_RV.setAdapter(mBluetoothDeviceAdapter);
+//                        mSearchUser_TV.setVisibility(View.GONE);
                         break;
                 }
             }
@@ -182,7 +291,10 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     }
 
     public void initializeAdapter() {
-        mDiscoverUserAdapter = new DiscoverUserAdapter(getActivity().getApplicationContext());
+        mDiscoverUserAdapter = new DiscoverUserAdapter(mContext);
+        mBluetoothDeviceAdapter = new BluetoothDeviceAdapter(mContext, this);
+        mBluetoothDeviceAdapter.setmBluetoothAdapter(mBluetoothAdapter);
+
     }
 
     public void initializeRecycleLayout() {
@@ -213,6 +325,140 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
         mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.SEARCH);
         if(mDiscoverUserAdapter.getSuggestMode() == DiscoverUserAdapter.SEARCH)
             new FirebaseUtil().searchUser(query);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void getAllPermissions() {
+        mPermissions_list = new ArrayList<>();
+
+        mPermissions_list.add(android.Manifest.permission.ACCESS_COARSE_LOCATION);
+        mPermissions_list.add(android.Manifest.permission.BLUETOOTH);
+        mPermissions_list.add(android.Manifest.permission.BLUETOOTH_ADMIN);
+
+        mPermissions_array = new String[mPermissions_list.size()];
+
+        mPermissions_array = mPermissions_list.toArray(mPermissions_array);
+        requestPermissions(mPermissions_array, 1);
+    }
+
+    public void setupBT() {
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        mBluetoothAdapter.setName("mobile bt");
+
+
+        if(mBluetoothAdapter == null) {
+            Toast.makeText(mContext, "Bluetooth not supported", Toast.LENGTH_SHORT).show();
+        }
+
+        Log.d(TAG, "bluetooth isEnable: " + mBluetoothAdapter.isEnabled());
+        if(!mBluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        }
+    }
+
+    public void setPairedDevices() {
+        pairedDevices = mBluetoothAdapter.getBondedDevices();
+        ArrayList<BluetoothDevice> deviceArrayList = new ArrayList<>(pairedDevices);
+//        mBluetoothDeviceAdapter.setBluetoothDevices(deviceArrayList);
+    }
+
+    public void setupProfile() {
+        mBluetoothAdapter.getProfileProxy(mContext, mProfileListener, BluetoothProfile.HEADSET);
+        mBluetoothAdapter.closeProfileProxy(BluetoothProfile.HEADSET, mBluetoothHeadset);
+    }
+
+    public void startDiscoverDevices() {
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        mContext.registerReceiver(mReceiver, filter);
+        Log.d(TAG, "registerReceiver");
+
+    }
+
+    public void stopDiscoverDevices() {
+        mContext.unregisterReceiver(mReceiver);
+        Log.d(TAG, "unregisterReceiver");
+    }
+
+    public void setupDiscoverable(int discoverTime) {
+        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, discoverTime);
+        startActivity(discoverableIntent);
+    }
+
+    public void startDiscover() {
+        mBluetoothAdapter.startDiscovery();
+    }
+
+    public void startBTServerThread() {
+        BTServerThread btServerThread = new BTServerThread(mBluetoothAdapter, mContext);
+        btServerThread.start();
+    }
+
+    public void sendImages (String path) {
+        mBluetoothDeviceAdapter.sendImages(path);
+    }
+
+    public void showBTDialog(String path) {
+
+        final Dialog settingsDialog = new Dialog(mContext);
+        settingsDialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+
+        View view = LayoutInflater.from(mContext).inflate(R.layout.discover_bt_dialog, null);
+
+        final ImageView bt_image_IV = (ImageView) view.findViewById(R.id.bt_image_IV);
+
+        Picasso.with(mContext).load(path).fit().into(bt_image_IV);
+
+        Button bt_save_BT = (Button) view.findViewById(R.id.bt_save_BT);
+        bt_save_BT.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                BitmapDrawable draw = (BitmapDrawable) bt_image_IV.getDrawable();
+                Bitmap bitmap = draw.getBitmap();
+
+                FileOutputStream outStream = null;
+                File sdCard = Environment.getExternalStorageDirectory();
+                File dir = new File(sdCard.getAbsolutePath() + "/myIns");
+                dir.mkdirs();
+
+                String fileName = String.format("%d.jpg", System.currentTimeMillis());
+                File outFile = new File(dir, fileName);
+                try {
+                    outStream = new FileOutputStream(outFile);
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outStream);
+                    // Save image to gallery
+                    String savedImageURL = MediaStore.Images.Media.insertImage(
+                            mContext.getContentResolver(),
+                            bitmap,
+                            fileName,
+                            ""
+                    );
+
+                    Log.d(TAG, "saved: " + savedImageURL);
+                    Toast.makeText(mContext, "Image saved!", Toast.LENGTH_SHORT);
+                    outStream.flush();
+                    outStream.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                settingsDialog.cancel();
+
+            }
+        });
+
+        Button bt_ignore_BT = (Button) view.findViewById(R.id.bt_ignore_BT);
+        bt_ignore_BT.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                settingsDialog.cancel();
+            }
+        });
+
+        settingsDialog.setContentView(view);
+        settingsDialog.show();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -256,5 +502,17 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
         mSearchUser_TV.setVisibility(View.GONE);
         if(mDiscoverUserAdapter.getSuggestMode() == DiscoverUserAdapter.SEARCH)
             mDiscoverUserAdapter.userSearchGet(userSearchGetEvent.getSuggestedUsers());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onBTSendImagesEvent(DiscoverMessage.BTSendImagesEvent btSendImagesEvent) {
+        Log.d(TAG, "Eventbus receive BTSendImagesEvent");
+        sendImages(btSendImagesEvent.getPath());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onBTReceivedImagesEvent(DiscoverMessage.BTReceiveImagesEvent btReceiveImagesEvent) {
+        Log.d(TAG, "Eventbus receive BTSendImagesEvent");
+        showBTDialog(btReceiveImagesEvent.getPath());
     }
 }
