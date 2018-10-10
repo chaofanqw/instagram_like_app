@@ -27,17 +27,14 @@ import net.dunrou.mobile.R;
 import net.dunrou.mobile.base.message.DiscoverMessage;
 import net.dunrou.mobile.base.message.UploadDatabaseMessage;
 import net.dunrou.mobile.base.message.UploadMessage;
-import net.dunrou.mobile.bean.FileProviderUtils;
 import net.dunrou.mobile.bean.GlideImageLoader;
 import net.dunrou.mobile.bean.ImagePickerAdapter;
 import net.dunrou.mobile.bean.SelectDialog;
-import net.dunrou.mobile.network.firebaseNetwork.UploadImage;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import java.io.File;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -226,16 +223,19 @@ public class WxDemoActivity_BT extends AppCompatActivity implements ImagePickerA
     public void publishImages(){
         if(selImageList != null && selImageList.size() != 0){
             for(ImageItem imageItem: selImageList){
-                new UploadImage().upload(FileProviderUtils.uriFromFile(this, new File(imageItem.path)));
+//                new UploadImage().upload(FileProviderUtils.uriFromFile(this, new File(imageItem.path)));
+                Log.d(TAG, "image path: " + imageItem.path);
+                EventBus.getDefault().post(new DiscoverMessage.BTSendImagesEvent(imageItem.path));
             }
+            onBackPressed();
 
-            uploadNumber = 0;
-            messageFormat = new MessageFormat("Sending {0} of {1} images.");
-            materialDialog = new MaterialDialog.Builder(this)
-                    .title("Sending Images")
-                    .content(messageFormat.format(new Object[]{uploadNumber,selImageList.size()}))
-                    .progress(true, 0)
-                    .show();
+//            uploadNumber = 0;
+//            messageFormat = new MessageFormat("Sending {0} of {1} images.");
+//            materialDialog = new MaterialDialog.Builder(this)
+//                    .title("Sending Images")
+//                    .content(messageFormat.format(new Object[]{uploadNumber,selImageList.size()}))
+//                    .progress(true, 0)
+//                    .show();
         }else{
             Toast.makeText(this, "Please select at least one image.", Toast.LENGTH_SHORT).show();
         }

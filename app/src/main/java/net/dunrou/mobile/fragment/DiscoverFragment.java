@@ -207,6 +207,8 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     public void onDestroy() {
         super.onDestroy();
         EventBus.getDefault().unregister(this);
+        mBluetoothAdapter.disable();
+//        stopDiscoverDevices();
     }
 
     @Override

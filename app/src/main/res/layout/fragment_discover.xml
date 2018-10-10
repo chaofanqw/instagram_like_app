@@ -80,6 +80,16 @@
         android:textAlignment="center"
         android:visibility="gone" />
 
+    <Button
+        android:id="@+id/bt_discoverable_BT"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_gravity="right"
+        android:background="@color/blueLight"
+        android:text="Make me discoverable"
+        android:textColor="@color/white"
+        android:visibility="gone" />
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/results_RV"
         android:layout_width="match_parent"

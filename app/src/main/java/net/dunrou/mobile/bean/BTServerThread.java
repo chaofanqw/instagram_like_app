@@ -59,6 +59,8 @@ public class BTServerThread extends Thread {
                     mServerSocket.close();
                 } catch (IOException e1) {
                     e1.printStackTrace();
+                } catch (NullPointerException e2) {
+                    e2.printStackTrace();
                 }
                 BTServerThread btServerThread = new BTServerThread(mBluetoothAdapter, mContext);
                 btServerThread.start();

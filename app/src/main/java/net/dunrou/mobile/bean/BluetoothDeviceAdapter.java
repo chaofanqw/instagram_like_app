@@ -97,10 +97,18 @@ public class BluetoothDeviceAdapter extends RecyclerView.Adapter<BluetoothDevice
     }
 
     public void initializeHolderView(BTDeviceViewHolder holder, BluetoothDevice bluetoothDevice) {
-        if((bluetoothDevice.getName() == null))
-            holder.mBt_device_name_TV.setText("Unknown");
-        else
-            holder.mBt_device_name_TV.setText(bluetoothDevice.getName());
+        String name;
+        try {
+            String[] names = bluetoothDevice.getName().split(",");
+            name = names[names.length-1];
+            Log.d(TAG, "test name: " + bluetoothDevice.getName().split(",")[0]);
+            Log.d(TAG, "test name: " + bluetoothDevice.getName().split(",")[1]);
+        } catch (NullPointerException e) {
+            name = "Unknown";
+        }
+
+        holder.mBt_device_name_TV.setText(name);
+
         holder.mBt_device_MAC_TV.setText(bluetoothDevice.getAddress());
     }
 }

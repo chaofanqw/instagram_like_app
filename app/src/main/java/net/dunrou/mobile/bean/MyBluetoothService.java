@@ -2,6 +2,9 @@ package net.dunrou.mobile.bean;
 
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Environment;
 import android.util.Log;
 
 import com.lzy.imagepicker.bean.ImageItem;
@@ -10,11 +13,12 @@ import net.dunrou.mobile.base.message.DiscoverMessage;
 
 import org.greenrobot.eventbus.EventBus;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.util.ArrayList;
 
 
@@ -23,8 +27,8 @@ public class MyBluetoothService {
 
     public static class ConnectedThread extends Thread {
         private final BluetoothSocket mSocket;
-        private InputStream mInStream;
-        private OutputStream mOutStream;
+        private DataInputStream mInStream;
+        private DataOutputStream mOutStream;
         private ArrayList<ImageItem> mReceiveImages;
         private Boolean isConnected = false;
 
@@ -34,12 +38,12 @@ public class MyBluetoothService {
 
         public ConnectedThread(BluetoothSocket mSocket, Context context) {
             this.mSocket = mSocket;
-            InputStream tmpIn = null;
-            OutputStream tmpOut = null;
+            DataInputStream tmpIn = null;
+            DataOutputStream tmpOut = null;
             mContext = context;
 
             try {
-                tmpIn = mSocket.getInputStream();
+                tmpIn = new DataInputStream(mSocket.getInputStream());
                 isConnected = true;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -49,7 +53,7 @@ public class MyBluetoothService {
             }
 
             try {
-                tmpOut = mSocket.getOutputStream();
+                tmpOut = new DataOutputStream(mSocket.getOutputStream());
                 isConnected = true;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -72,18 +76,46 @@ public class MyBluetoothService {
 
             while (keepRunning && mInStream != null) {
 
-                BufferedReader br = new BufferedReader(new InputStreamReader(mInStream));
-                // readLine() read and delete one line
+                long len = 0;
                 try {
-                    String received_path = br.readLine();
-                    Log.d(TAG, "received path: " + received_path);
-                    EventBus.getDefault().post(new DiscoverMessage.BTReceiveImagesEvent(received_path));
-                    keepRunning = false;
+                    len = mInStream.readLong();
 
+                    System.out.println("len = " + len);
+                    byte[] bytes = new byte[(int) len];
+                    mInStream.readFully(bytes);
 
+                    FileOutputStream outStream = null;
+                    File sdCard = Environment.getExternalStorageDirectory();
+                    File dir = new File(sdCard.getAbsolutePath() + "/myIns/bt_images/");
+                    dir.mkdirs();
+
+                    String fileName = String.format("%d.png", System.currentTimeMillis());
+                    File outFile = new File(dir, fileName);
+
+                    Log.d(TAG, "image path: " + dir + fileName);
+
+                    FileOutputStream fileOutputStream = new FileOutputStream(outFile);
+                    fileOutputStream.write(bytes);
+
+                    EventBus.getDefault().post(new DiscoverMessage.BTReceiveImagesEvent(dir + "/" + fileName));
+//                    keepRunning = false;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
+
+//                BufferedReader br = new BufferedReader(new InputStreamReader(mInStream));
+//                // readLine() read and delete one line
+//                try {
+//                    String received_path = br.readLine();
+//                    Log.d(TAG, "received path: " + received_path);
+//                    EventBus.getDefault().post(new DiscoverMessage.BTReceiveImagesEvent(received_path));
+//                    keepRunning = false;
+//
+//
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
 
 
                 if(Thread.currentThread().isInterrupted())
@@ -105,19 +137,32 @@ public class MyBluetoothService {
             Log.d(TAG, "write using BT called, received image_path: " + String.valueOf(image_path));
             Log.d(TAG, "mOutStream: " + mOutStream);
 
-            StringBuffer sb = new StringBuffer();
-            sb.append(image_path);
-            sb.append("\n");
-            if (mOutStream != null) {
-                try {
-                    mOutStream.write(sb.toString().getBytes());
-                    mOutStream.flush();
-                    Log.d(TAG,"@ send data " + sb.toString());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Log.d(TAG,"@ Client sending fail");
-                }
+            Bitmap bitmap = BitmapFactory.decodeFile(image_path);
+            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG,100,bout);
+            long len = bout.size();
+            Log.i("sendImgMsg", "len: "+len);
+            try {
+                mOutStream.writeLong(len);
+                mOutStream.write(bout.toByteArray());
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+
+
+//            StringBuffer sb = new StringBuffer();
+//            sb.append(image_path);
+//            sb.append("\n");
+//            if (mOutStream != null) {
+//                try {
+//                    mOutStream.write(sb.toString().getBytes());
+//                    mOutStream.flush();
+//                    Log.d(TAG,"@ send data " + sb.toString());
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    Log.d(TAG,"@ Client sending fail");
+//                }
+//            }
             Log.d(TAG, "sent successfully!!!");
         }
 

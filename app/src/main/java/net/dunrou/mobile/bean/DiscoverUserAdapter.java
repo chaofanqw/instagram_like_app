@@ -48,7 +48,7 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
 
     public static final int COMMON_FRIENDS = 1;
     public static final int TOP = 2;
-    public static final int TEST = 3;
+    public static final int INRANGE = 3;
     public static final int SEARCH = 4;
 
     public int suggestMode = COMMON_FRIENDS;
@@ -106,7 +106,7 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
                 user = suggestedUsers_commonFriends.get(position);
                 holder.mDescription_TV.setVisibility(View.VISIBLE);
                 break;
-            case TEST:
+            case INRANGE:
                 user = suggestedUsers_test.get(position);
                 holder.mDescription_TV.setVisibility(View.GONE);
                 break;
@@ -175,7 +175,7 @@ public class DiscoverUserAdapter extends RecyclerView.Adapter<DiscoverUserAdapte
                 return suggestedUsers_top.size();
             case COMMON_FRIENDS:
                 return suggestedUsers_commonFriends.size();
-            case TEST:
+            case INRANGE:
                 return suggestedUsers_test.size();
             case SEARCH:
                 return suggestedUsers_search.size();
