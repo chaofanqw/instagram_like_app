@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -33,8 +34,6 @@ import android.widget.ImageView;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.squareup.picasso.Picasso;
 
 import net.dunrou.mobile.R;
 import net.dunrou.mobile.base.message.DiscoverMessage;
@@ -80,6 +79,8 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     private TabLayout.Tab tab_commonFriend;
     private TabLayout.Tab tab_nearby;
 
+    private Button mbt_discoverable_BT;
+
     private BluetoothAdapter mBluetoothAdapter;
     private Set<BluetoothDevice> pairedDevices;
     private ArrayList<BluetoothDevice> mDiscoverableDevices = new ArrayList<>();
@@ -91,6 +92,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     private String[] mPermissions_array;
 
     public static int DISCOVERABLE_TIME_SHORT = 300;
+    public static int DISCOVERABLE_TIME_LONG = 900;
 
     public static final UUID MY_UUID = UUID.fromString("0811c45b-e99b-49dd-a6ac-dc5e262e254d");
 
@@ -122,17 +124,20 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
                 Log.d(TAG, "get device: " + device.getName() + " " + device.getAddress() + " " + device.getUuids());
-                for(BluetoothDevice device1: mDiscoverableDevices) {
-                    if (device1.getAddress().equals(device.getAddress()))
-                        isExisted = true;
-                    break;
-                }
-                if(!isExisted)
-                {
-//                    TODO filter out non project bt
-                    mDiscoverableDevices.add(device);
-                    mBluetoothDeviceAdapter.setBluetoothDevices(mDiscoverableDevices);
-                }
+                try {
+                    if(device.getName().split(",")[0].equals(MY_UUID.toString())) {
+                        for(BluetoothDevice d: mDiscoverableDevices) {
+                            if (d.getAddress().equals(device.getAddress()))
+                                isExisted = true;
+                            break;
+                        }
+                        if(!isExisted)
+                        {
+                            mDiscoverableDevices.add(device);
+                            mBluetoothDeviceAdapter.setBluetoothDevices(mDiscoverableDevices);
+                        }
+                    }
+                } catch (NullPointerException e) {}
 
             }
         }
@@ -151,6 +156,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate called");
         mContext = this.getActivity();
         EventBus.getDefault().register(this);
 
@@ -160,9 +166,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
 
         setupBT();
         setupProfile();
-        setPairedDevices();
         startDiscoverDevices();
-        setupDiscoverable(DISCOVERABLE_TIME_SHORT);
         startDiscover();
         startBTServerThread();
     }
@@ -170,23 +174,33 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        Log.d(TAG, "onViewCreated called");
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (mDiscoverUserAdapter.getSuggestMode() == DiscoverUserAdapter.TEST) {
-            startDiscoverDevices();
-        }
+        setupNearby();
 
-
+//        Log.d(TAG, "onResume called");
+//        switch(mDiscoverUserAdapter.getSuggestMode()) {
+//            case DiscoverUserAdapter.TOP:
+//                setupTop();
+//                break;
+//            case DiscoverUserAdapter.COMMON_FRIENDS:
+//                setupPeople();
+//                break;
+//            case DiscoverUserAdapter.INRANGE:
+//                setupNearby();
+//                break;
+//        }
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        if (mDiscoverUserAdapter.getSuggestMode() == DiscoverUserAdapter.TEST)
-            stopDiscoverDevices();
+//        if (mDiscoverUserAdapter.getSuggestMode() == DiscoverUserAdapter.INRANGE)
+//            stopDiscoverDevices();
     }
 
     @Override
@@ -213,36 +227,22 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
         tab_top= mDiscover_TL.getTabAt(0);
         tab_commonFriend = mDiscover_TL.getTabAt(1);
         tab_nearby = mDiscover_TL.getTabAt(2);
-        tab_commonFriend.select();
+        tab_nearby.select();
         mDiscover_TL.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 switch(tab.getPosition()) {
                     case 0:
                         Log.d(TAG, "click top");
-                        mResults_RV.setAdapter(mDiscoverUserAdapter);
-                        mSearch_SV.clearFocus();
-                        mSearch_SV.setQuery("", false);
-                        mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.TOP);
-                        mSearchUser_TV.setVisibility(View.GONE);
+                        setupTop();
                         break;
                     case 1:
                         Log.d(TAG, "click people");
-                        mResults_RV.setAdapter(mDiscoverUserAdapter);
-                        mSearch_SV.clearFocus();
-                        mSearch_SV.setQuery("", false);
-                        mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.COMMON_FRIENDS);
-                        mSearchUser_TV.setVisibility(View.GONE);
+                        setupPeople();
                         break;
                     case 2:
                         Log.d(TAG, "click nearby");
-//                        Intent intent = new Intent(mContext, BluetoothActivity.class);
-//                        startActivity(intent);
-//                        mSearch_SV.clearFocus();
-//                        mSearch_SV.setQuery("", false);
-                        mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.TEST);
-                        mResults_RV.setAdapter(mBluetoothDeviceAdapter);
-//                        mSearchUser_TV.setVisibility(View.GONE);
+                        setupNearby();
                         break;
                 }
             }
@@ -257,6 +257,39 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
 
             }
         });
+
+        mbt_discoverable_BT = mView.findViewById(R.id.bt_discoverable_BT);
+        mbt_discoverable_BT.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setupDiscoverable(DISCOVERABLE_TIME_LONG);
+            }
+        });
+    }
+
+    public void setupTop() {
+        mResults_RV.setAdapter(mDiscoverUserAdapter);
+        mSearch_SV.clearFocus();
+        mSearch_SV.setQuery("", false);
+        mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.TOP);
+        mSearchUser_TV.setVisibility(View.GONE);
+        mbt_discoverable_BT.setVisibility(View.GONE);
+    }
+
+    public void setupPeople() {
+        mResults_RV.setAdapter(mDiscoverUserAdapter);
+        mSearch_SV.clearFocus();
+        mSearch_SV.setQuery("", false);
+        mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.COMMON_FRIENDS);
+        mSearchUser_TV.setVisibility(View.GONE);
+        mbt_discoverable_BT.setVisibility(View.GONE);
+    }
+
+    public void setupNearby() {
+        startDiscover();
+        mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.INRANGE);
+        mResults_RV.setAdapter(mBluetoothDeviceAdapter);
+        mbt_discoverable_BT.setVisibility(View.VISIBLE);
     }
 
     public void initializeSearch() {
@@ -285,7 +318,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
                 else if(tab_commonFriend.isSelected())
                     mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.COMMON_FRIENDS);
                 else
-                    mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.TEST);
+                    mDiscoverUserAdapter.setSuggestMode(DiscoverUserAdapter.INRANGE);
             }
         });
     }
@@ -343,7 +376,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
 
     public void setupBT() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        mBluetoothAdapter.setName("mobile bt");
+        mBluetoothAdapter.setName(MY_UUID.toString() + "," + mBluetoothAdapter.getName());
 
 
         if(mBluetoothAdapter == null) {
@@ -357,11 +390,11 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
         }
     }
 
-    public void setPairedDevices() {
-        pairedDevices = mBluetoothAdapter.getBondedDevices();
-        ArrayList<BluetoothDevice> deviceArrayList = new ArrayList<>(pairedDevices);
-//        mBluetoothDeviceAdapter.setBluetoothDevices(deviceArrayList);
-    }
+//    public void setPairedDevices() {
+//        pairedDevices = mBluetoothAdapter.getBondedDevices();
+//        ArrayList<BluetoothDevice> deviceArrayList = new ArrayList<>(pairedDevices);
+////        mBluetoothDeviceAdapter.setBluetoothDevices(deviceArrayList);
+//    }
 
     public void setupProfile() {
         mBluetoothAdapter.getProfileProxy(mContext, mProfileListener, BluetoothProfile.HEADSET);
@@ -408,44 +441,17 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
 
         final ImageView bt_image_IV = (ImageView) view.findViewById(R.id.bt_image_IV);
 
-        Picasso.with(mContext).load(path).fit().into(bt_image_IV);
+        File imgFile = new  File(path);
+        Log.d(TAG, "test path!" + path);
+        Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+        bt_image_IV.setImageBitmap(myBitmap);
 
         Button bt_save_BT = (Button) view.findViewById(R.id.bt_save_BT);
         bt_save_BT.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                BitmapDrawable draw = (BitmapDrawable) bt_image_IV.getDrawable();
-                Bitmap bitmap = draw.getBitmap();
-
-                FileOutputStream outStream = null;
-                File sdCard = Environment.getExternalStorageDirectory();
-                File dir = new File(sdCard.getAbsolutePath() + "/myIns");
-                dir.mkdirs();
-
-                String fileName = String.format("%d.jpg", System.currentTimeMillis());
-                File outFile = new File(dir, fileName);
-                try {
-                    outStream = new FileOutputStream(outFile);
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outStream);
-                    // Save image to gallery
-                    String savedImageURL = MediaStore.Images.Media.insertImage(
-                            mContext.getContentResolver(),
-                            bitmap,
-                            fileName,
-                            ""
-                    );
-
-                    Log.d(TAG, "saved: " + savedImageURL);
-                    Toast.makeText(mContext, "Image saved!", Toast.LENGTH_SHORT);
-                    outStream.flush();
-                    outStream.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                saveToGallery((BitmapDrawable) bt_image_IV.getDrawable());
                 settingsDialog.cancel();
-
             }
         });
 
@@ -459,6 +465,45 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
 
         settingsDialog.setContentView(view);
         settingsDialog.show();
+    }
+
+    /**
+     * save image to gallery
+     */
+    public void saveToGallery(BitmapDrawable data) {
+        BitmapDrawable draw = data;
+        Bitmap bitmap = draw.getBitmap();
+
+        FileOutputStream outStream = null;
+        File sdCard = Environment.getExternalStorageDirectory();
+        File dir = new File(sdCard.getAbsolutePath() + "/myIns");
+        dir.mkdirs();
+
+        String fileName = String.format("%d.jpg", System.currentTimeMillis());
+        File outFile = new File(dir, fileName);
+        try {
+            outStream = new FileOutputStream(outFile);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outStream);
+            // Save image to gallery
+            String savedImageURL = MediaStore.Images.Media.insertImage(
+                    mContext.getContentResolver(),
+                    bitmap,
+                    fileName,
+                    ""
+            );
+
+            Log.d(TAG, "saved: " + savedImageURL);
+
+            Toast toast = Toast.makeText(mContext, "Image saved!", Toast.LENGTH_SHORT);
+            toast.show();
+
+            outStream.flush();
+            outStream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
