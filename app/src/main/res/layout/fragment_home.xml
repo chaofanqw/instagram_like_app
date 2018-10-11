@@ -16,4 +16,57 @@
             android:layout_height="match_parent"/>
     </in.srain.cube.views.ptr.PtrClassicFrameLayout>
 
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="12.5dp">
+
+        <TextView
+            android:id="@+id/panel_arrow"
+            android:layout_width="15dp"
+            android:layout_height="30dp"
+            android:background="@drawable/arrow"
+            android:alpha="0.7"/>
+
+        <LinearLayout
+            android:id="@+id/panel"
+            android:layout_width="120dp"
+            android:layout_height="65dp"
+            android:background="@drawable/panel"
+            android:orientation="vertical"
+            android:alpha="0.7"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/sort_time"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="7dp"
+                android:paddingBottom="3dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Sort by Time"
+                android:textSize="14sp"
+                android:textColor="@color/shallow_yellow"
+                />
+
+            <TextView
+                android:id="@+id/sort_location"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="3dp"
+                android:paddingBottom="7dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Sort by Location"
+                android:textSize="14sp"
+                android:textColor="@color/white"
+                />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
 </RelativeLayout>

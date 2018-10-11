@@ -1,7 +1,9 @@
 package net.dunrou.mobile.activity;
 
+import android.Manifest;
 import android.app.Fragment;
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.util.Log;
@@ -10,9 +12,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.zhy.m.permission.MPermissions;
+import com.zhy.m.permission.PermissionDenied;
+import com.zhy.m.permission.PermissionGrant;
+
 import net.dunrou.mobile.R;
 import net.dunrou.mobile.bean.BaseActivity;
 import net.dunrou.mobile.bean.DataGenerator;
+import net.dunrou.mobile.bean.IGetLocation;
 import net.dunrou.mobile.fragment.HomeFragment;
 import net.dunrou.mobile.network.HttpResult;
 import net.dunrou.mobile.network.InsNetwork;
@@ -20,11 +27,15 @@ import net.dunrou.mobile.network.InsService;
 import net.dunrou.mobile.network.RetrofitUtil;
 
 
+import butterknife.OnClick;
+import io.nlopez.smartlocation.OnLocationUpdatedListener;
+import io.nlopez.smartlocation.SmartLocation;
+import io.nlopez.smartlocation.location.providers.LocationGooglePlayServicesProvider;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 
 
-public class MainActivity extends BaseActivity implements View.OnClickListener {
+public class MainActivity extends BaseActivity implements View.OnClickListener, IGetLocation {
     public static final int PHOTO_TAKE = 10001;
     public static final String PHOTO_INFO = "info";
 
@@ -40,9 +51,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
         setContentView(R.layout.activity_main);
 
-        mFragmensts = DataGenerator.getFragments("TabLayout Tab");
-        initView();
         CURRENT_USERID = getIntent().getStringExtra("CURRENT_USERID");
+        mFragmensts = DataGenerator.getFragments(CURRENT_USERID);
+        initView();
         Log.d(TAG, "CURRENT_USERID: " + CURRENT_USERID);
 
 
@@ -172,11 +183,40 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             if(requestCode == PHOTO_TAKE){
                 if(data.getBooleanExtra(PHOTO_INFO, false)){
                     onPhotoSuccess();
-                    ((HomeFragment) mFragmensts[0]).initData();
+                    getLocation();
                 }
             }
         }
     }
 
+    @Override
+    public void getLocation(){
+        MPermissions.requestPermissions(this, 100, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION);
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        MPermissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @PermissionGrant(100)
+    public void requestSdcardSuccess() {
+        SmartLocation.with(this)
+                .location(new LocationGooglePlayServicesProvider())
+                .oneFix()
+                .start(new OnLocationUpdatedListener() {
+                    @Override
+                    public void onLocationUpdated(Location mlocation) {
+                        ((HomeFragment) mFragmensts[0]).initData(mlocation);
+                    }});
+    }
+
+    @PermissionDenied(100)
+    public void requestSdcardFailed()
+    {
+        Toast.makeText(this, "Cannot get access to location!", Toast.LENGTH_SHORT).show();
+    }
 
 }

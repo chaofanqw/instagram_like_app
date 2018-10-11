@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Created by Stephen on 2018/9/20.
@@ -102,5 +103,18 @@ public class FirebaseEventLike {
 
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FirebaseEventLike that = (FirebaseEventLike) o;
+        return Objects.equals(eventPostId, that.eventPostId) &&
+                Objects.equals(userId, that.userId);
+    }
 
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(eventPostId, userId);
+    }
 }

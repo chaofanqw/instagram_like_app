@@ -316,15 +316,13 @@ public class WxDemoActivity extends AppCompatActivity implements ImagePickerAdap
 
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
-    {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         MPermissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     @PermissionGrant(REQUEST_LOCATION)
-    public void requestSdcardSuccess()
-    {
+    public void requestSdcardSuccess() {
         SmartLocation.with(this)
                 .location(new LocationGooglePlayServicesProvider())
                 .oneFix()

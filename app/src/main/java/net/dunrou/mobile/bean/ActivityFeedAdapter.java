@@ -26,8 +26,11 @@ import net.dunrou.mobile.base.firebaseClass.FirebaseRelationship;
 import net.dunrou.mobile.base.firebaseClass.FirebaseUser;
 import net.dunrou.mobile.network.firebaseNetwork.FirebaseUtil;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 
 public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapter.ActivityFeedViewHolder> {
@@ -85,7 +88,7 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
 
     @Override
     public void onBindViewHolder(ActivityFeedViewHolder holder, int position) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        DateFormat dateFormat = SimpleDateFormat.getDateInstance();
 
         switch (currentMode) {
             case FOLLOW_ME:
@@ -268,10 +271,26 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
                 myPostsID.add(fp.getEventPostId());
         }
 
+        Collections.sort(allLikes, new Comparator<FirebaseEventLike>() {
+            @Override
+            public int compare(FirebaseEventLike like1, FirebaseEventLike like2) {
+                if (like1.getTime().before(like2.getTime())) {
+                    return -1;
+                } else if (like1.getTime().after(like2.getTime())) {
+                    return 1;
+                }
+                return 0;
+            }
+        });
+
         ArrayList<FirebaseEventLike> targets = new ArrayList<>();
         for (FirebaseEventLike fl : allLikes) {
-            if (myPostsID.contains(fl.getEventPostId()) && fl.getStatus()) {
-                targets.add(fl);
+            if (myPostsID.contains(fl.getEventPostId())) {
+                if (fl.getStatus()) {
+                    targets.add(fl);
+                } else {
+                    targets.remove(fl);
+                }
             }
         }
         allLikeMe = targets;

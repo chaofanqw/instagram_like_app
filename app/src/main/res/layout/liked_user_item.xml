@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingBottom="9.5dp"
+        android:paddingStart="12.5dp"
+        android:paddingEnd="18.5dp"
+        android:paddingTop="12.5dp">
+
+        <com.lzy.widget.CircleImageView
+            android:id="@+id/liked_user_avatar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_default_color"
+            app:civ_BorderWidth="2dp"
+            app:civ_BorderColor="#00000000"/>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp">
+
+            <TextView
+                android:id="@+id/liked_username"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Unknown User"
+                android:layout_marginBottom="5dp"
+                android:textColor="#6b8747"
+                android:textSize="14sp"/>
+
+
+            <TextView
+                android:id="@+id/liked_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:layout_below="@+id/liked_username"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="5dp"
+                android:text="2018-09-20 12:00"
+                android:textColor="#8e8e8e"
+                android:textSize="12sp"/>
+
+        </RelativeLayout>
+    </LinearLayout>
+</LinearLayout>

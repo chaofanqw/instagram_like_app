@@ -1,5 +1,6 @@
 package net.dunrou.mobile.network.firebaseNetwork;
 
+import android.location.Location;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -43,6 +44,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -68,6 +70,8 @@ public class FirebaseUtil {
     private int[] likeNum;
     private ArrayList[] postReplies;
     private boolean[] selfLike;
+    private ArrayList[] followeeLike;
+    private float[] distances;
     private ArrayList<EventItem> eventItems = new ArrayList<>();
     private volatile boolean canGet = true;
 
@@ -98,7 +102,7 @@ public class FirebaseUtil {
                 });
     }
 
-    public void getEventPost(final String username) {
+    public void getEventPost(final String username, final boolean isTime, final Location location) {
         if (canGet) {
             canGet = false;
             new Thread(new Runnable() {
@@ -135,25 +139,60 @@ public class FirebaseUtil {
                             Log.d("result", "onCancelled: error");
                         }
                     });
-                    while (count != 0) ;
+                    while (count != 0);
                     postCount = usernameList.size();
                     avatarCount = new AtomicInteger(postCount);
                     for (String user : usernameList) {
                         getAvatar(user);
                         getPost(user);
                     }
-                    while (postCount != 0) ;
-                    Collections.sort(eventPostList, new Comparator<FirebaseEventPost>() {
-                        @Override
-                        public int compare(FirebaseEventPost eventPost1, FirebaseEventPost eventPost2) {
-                            if (eventPost1.getTime().before(eventPost2.getTime())) {
-                                return 1;
-                            } else if (eventPost1.getTime().after(eventPost2.getTime())) {
-                                return -1;
+                    while (postCount != 0);
+                    if (isTime || (location == null)) {
+                        Collections.sort(eventPostList, new Comparator<FirebaseEventPost>() {
+                            @Override
+                            public int compare(FirebaseEventPost eventPost1, FirebaseEventPost eventPost2) {
+                                if (eventPost1.getTime().before(eventPost2.getTime())) {
+                                    return 1;
+                                } else if (eventPost1.getTime().after(eventPost2.getTime())) {
+                                    return -1;
+                                }
+                                return 0;
                             }
-                            return 0;
-                        }
-                    });
+                        });
+                    } else {
+                        Collections.sort(eventPostList, new Comparator<FirebaseEventPost>() {
+                            @Override
+                            public int compare(FirebaseEventPost eventPost1, FirebaseEventPost eventPost2) {
+                                if (eventPost1.getLocation() != null && eventPost2.getLocation() != null) {
+                                    float distance1 = location.distanceTo(eventPost1.getLocation());
+                                    float distance2 = location.distanceTo(eventPost2.getLocation());
+                                    if (distance1 > distance2) {
+                                        return 1;
+                                    } else if (distance1 < distance2) {
+                                        return -1;
+                                    } else {
+                                        if (eventPost1.getTime().before(eventPost2.getTime())) {
+                                            return 1;
+                                        } else if (eventPost1.getTime().after(eventPost2.getTime())) {
+                                            return -1;
+                                        }
+                                        return 0;
+                                    }
+                                } else if (eventPost1.getLocation() != null) {
+                                    return -1;
+                                } else if (eventPost2.getLocation() != null) {
+                                    return 1;
+                                } else {
+                                    if (eventPost1.getTime().before(eventPost2.getTime())) {
+                                        return 1;
+                                    } else if (eventPost1.getTime().after(eventPost2.getTime())) {
+                                        return -1;
+                                    }
+                                    return 0;
+                                }
+                            }
+                        });
+                    }
                     int size = eventPostList.size();
                     likeCount = new AtomicInteger(size);
                     commentCount = new AtomicInteger(size);
@@ -161,6 +200,8 @@ public class FirebaseUtil {
                     likeNum = new int[size];
                     postReplies = new ArrayList[size];
                     selfLike = new boolean[size];
+                    followeeLike = new ArrayList[size];
+                    distances = new float[size];
                     for (FirebaseEventPost post : eventPostList) {
                         getLike(num, post.getEventPostId(), username);
                         getComment(num, post.getEventPostId());
@@ -171,7 +212,11 @@ public class FirebaseUtil {
                     while (avatarCount.get() != 0 || likeCount.get() != 0 || commentCount.get() != 0);
                     for (int i = 0; i < size; i++) {
                         firebaseEventPost = eventPostList.get(i);
-                        eventItem = new EventItem(userAvatar.get(firebaseEventPost.getUserId()), firebaseEventPost, likeNum[i], postReplies[i], selfLike[i]);
+                        distances[i] = -1;
+                        if (location != null && firebaseEventPost.getLocation() != null) {
+                            distances[i] = location.distanceTo(firebaseEventPost.getLocation());
+                        }
+                        eventItem = new EventItem(userAvatar.get(firebaseEventPost.getUserId()), firebaseEventPost, likeNum[i], postReplies[i], selfLike[i], followeeLike[i], distances[i]);
                         eventItems.add(eventItem);
                     }
                     EventBus.getDefault().post(new RefreshMessage(eventItems));
@@ -251,9 +296,33 @@ public class FirebaseUtil {
 
     private void getLike(final int i, final String eventPostId, final String username) {
         database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("relationship");
+        final HashMap<String, Integer> followee = new HashMap<>();
+        count = 1;
+        Query query = myRef.orderByChild("follower").equalTo(username);
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Iterator<DataSnapshot> set = dataSnapshot.getChildren().iterator();
+                String name;
+                while (set.hasNext()) {
+                    DataSnapshot tempDataSnapshot = set.next();
+                    HashMap<String, Object> result = (HashMap<String, Object>) tempDataSnapshot.getValue();
+                    name = (String) result.get("followee");
+                    if (result.get("status").equals("true")) {
+                        followee.put(name, 0);
+                    }
+                }
+                count = 0;
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d("result", "onCancelled: error");
+            }
+        });
+        while (count != 0);
         myRef = database.getReference("like");
-
-        Query query = myRef.orderByChild("eventPostId").equalTo(eventPostId);
+        query = myRef.orderByChild("eventPostId").equalTo(eventPostId);
         query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -272,15 +341,23 @@ public class FirebaseUtil {
                             if (result.get("status").equals("true")) {
                                 likeNum[i]++;
                                 if (result.containsKey("userId")) {
-                                    if (((String) result.get("userId")).equals(username)) {
+                                    String name = (String) result.get("userId");
+                                    if (name.equals(username)) {
                                         selfLikeNum++;
+                                    }
+                                    if (followee.containsKey(name)) {
+                                        followee.put(name, followee.get(name) + 1);
                                     }
                                 }
                             } else {
                                 likeNum[i]--;
                                 if (result.containsKey("userId")) {
-                                    if (((String) result.get("userId")).equals(username)) {
+                                    String name = (String) result.get("userId");
+                                    if (name.equals(username)) {
                                         selfLikeNum--;
+                                    }
+                                    if (followee.containsKey(name)) {
+                                        followee.put(name, followee.get(name) - 1);
                                     }
                                 }
                             }
@@ -289,6 +366,12 @@ public class FirebaseUtil {
                 }
                 if (selfLikeNum > 0) {
                     selfLike[i] = true;
+                }
+                followeeLike[i] = new ArrayList<String>();
+                for (Map.Entry<String, Integer> entry : followee.entrySet()) {
+                    if (entry.getValue() > 0) {
+                        followeeLike[i].add(entry.getKey());
+                    }
                 }
                 likeCount.decrementAndGet();
             }
@@ -392,7 +475,7 @@ public class FirebaseUtil {
                     while (likeCount.get() != 0);
                     for (int i = 0; i < eventPostList.size(); i++) {
                         firebaseEventPost = eventPostList.get(i);
-                        eventItem = new EventItem(userAvatar.get(firebaseEventPost.getUserId()), firebaseEventPost, likeNum[i], postReplies[i], selfLike[i]);
+                        eventItem = new EventItem(userAvatar.get(firebaseEventPost.getUserId()), firebaseEventPost, likeNum[i], postReplies[i], selfLike[i], followeeLike[i], distances[i]);
                         eventItems.add(eventItem);
                     }
                     EventBus.getDefault().post(new RefreshMessage(eventItems));
@@ -447,7 +530,7 @@ public class FirebaseUtil {
                     while (commentCount.get() != 0);
                     for (int i = 0; i < eventPostList.size(); i++) {
                         firebaseEventPost = eventPostList.get(i);
-                        eventItem = new EventItem(userAvatar.get(firebaseEventPost.getUserId()), firebaseEventPost, likeNum[i], postReplies[i], selfLike[i]);
+                        eventItem = new EventItem(userAvatar.get(firebaseEventPost.getUserId()), firebaseEventPost, likeNum[i], postReplies[i], selfLike[i], followeeLike[i], distances[i]);
                         eventItems.add(eventItem);
                     }
                     EventBus.getDefault().post(new RefreshMessage(eventItems));

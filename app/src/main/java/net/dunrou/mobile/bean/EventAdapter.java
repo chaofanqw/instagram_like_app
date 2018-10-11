@@ -1,6 +1,7 @@
 package net.dunrou.mobile.bean;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -31,14 +32,19 @@ import com.lzy.widget.CircleImageView;
 import com.squareup.picasso.Picasso;
 
 import net.dunrou.mobile.R;
+import net.dunrou.mobile.activity.LikeActivity;
+import net.dunrou.mobile.activity.MainActivity;
+import net.dunrou.mobile.activity.ProfileActivity;
 import net.dunrou.mobile.base.firebaseClass.FirebaseEventComment;
 import net.dunrou.mobile.base.firebaseClass.FirebaseEventLike;
 import net.dunrou.mobile.network.firebaseNetwork.FirebaseUtil;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -98,8 +104,18 @@ public class EventAdapter extends BaseAdapter {
         }
         holder.username.setText(item.getUserId());
         holder.createTime.setText(item.getCreateTime());
-        String defaultAvatar = "android.resource://net.dunrou.mobile/" + R.drawable.profile_n;
+        String defaultAvatar = "android.resource://net.dunrou.mobile/" + R.drawable.profile_p;
         setImage(context, holder.avatar, item.avatar == null ? defaultAvatar : item.avatar.smallPicUrl);
+
+        if (item.distance >= 0) {
+            DecimalFormat df = new DecimalFormat("#0.#");
+            String distance = df.format(item.distance) + "m";
+            holder.distance.setText(distance);
+            holder.distance.setVisibility(View.VISIBLE);
+        } else {
+            holder.distance.setVisibility(View.GONE);
+        }
+
 
         ArrayList<ImageInfo> imageInfo = new ArrayList<>();
         List<EventPic> imageDetails = item.getAttachments();
@@ -112,17 +128,46 @@ public class EventAdapter extends BaseAdapter {
             }
         }
         holder.nineGrid.setAdapter(new NineGridViewClickAdapter(context, imageInfo));
-        holder.likeNumber.setText(String.valueOf(item.likeCount));
 
         if (item.feedReplies == null) {
             holder.comments.setVisibility(View.GONE);
-            holder.commentNumber.setText("0");
+            holder.commentNumber.setVisibility(View.GONE);
         } else {
             holder.comments.setVisibility(View.VISIBLE);
-            holder.comments.setAdapter(new EventCommentAdapter(context, item.getFeedReplies()));
-            holder.commentNumber.setText(String.valueOf(item.getFeedReplies().size()));
+            holder.comments.setAdapter(new EventCommentAdapter(context, item.getFeedReplies(), holder));
+            int num = item.getFeedReplies().size();
+            if (num > 3) {
+                String s = "View All " + String.valueOf(num) + " Comments";
+                holder.commentNumber.setText(s);
+                holder.commentNumber.setVisibility(View.VISIBLE);
+            } else {
+                holder.commentNumber.setVisibility(View.GONE);
+            }
         }
 
+        if (item.likeCount > 0) {
+            String s;
+            if (item.followeeLike.size() == 0) {
+                if (item.likeCount == 1) {
+                    s = "1 Like";
+                } else {
+                    s = String.valueOf(item.likeCount) + " Likes";
+                }
+            } else {
+                String name = item.followeeLike.get(item.followeeLike.size() - 1);
+                if (item.likeCount == 1) {
+                    s = "Liked by " + name;
+                } else if (item.likeCount == 2) {
+                    s = "Liked by " + name + " and 1 other";
+                } else {
+                    s = "Liked by " + name + " and " + String.valueOf(item.likeCount - 1) + " others";
+                }
+            }
+            holder.likeNumber.setText(s);
+            holder.likeNumber.setVisibility(View.VISIBLE);
+        } else {
+            holder.likeNumber.setVisibility(View.GONE);
+        }
         if (item.selfLike) {
             holder.likeButton.setImageResource(R.drawable.like_p);
             holder.selfLikeInformation.setText("1");
@@ -162,6 +207,7 @@ public class EventAdapter extends BaseAdapter {
         @BindView(R.id.information) TextView information;
         @BindView(R.id.self_like) TextView selfLikeInformation;
         @BindView(R.id.post_index) TextView postIndex;
+        @BindView(R.id.distance) TextView distance;
 
         private PopupWindow editWindow;
         private View rootView;
@@ -246,6 +292,49 @@ public class EventAdapter extends BaseAdapter {
             FirebaseEventLike firebaseEventLike = new FirebaseEventLike(information.getText().toString(), user, date, selfLikeInformation.getText().equals("0"));
             new FirebaseUtil().insertLike(firebaseEventLike, Integer.parseInt(postIndex.getText().toString()));
         }
+
+        @OnClick(R.id.comment_number)
+        public void displayComment() {
+            ((EventCommentAdapter) comments.getAdapter()).reply();
+        }
+
+        @OnClick(R.id.avatar)
+        public void avatarListener() {
+            displayProfile();
+        }
+
+        @OnClick(R.id.tv_username)
+        public void usernameListener() {
+            displayProfile();
+        }
+
+        public void displayProfile() {
+            Intent intent = new Intent(context, ProfileActivity.class);
+            intent.putExtra("CURRENT_USERID", username.getText().toString());
+            context.startActivity(intent);
+        }
+
+        @OnClick(R.id.like_number)
+        public void displayLikeUser() {
+            Intent intent = new Intent(context, LikeActivity.class);
+            intent.putExtra("postID", information.getText().toString());
+            context.startActivity(intent);
+        }
+
+//        @OnClick(R.id.lv_comments)
+//        public void changeCommentStatus() {
+//            comments.setClickable(false);
+//            if (((EventCommentAdapter) comments.getAdapter()).getTotal() > 3) {
+//                ((EventCommentAdapter) comments.getAdapter()).reply();
+//                if (commentNumber.getVisibility() == View.GONE) {
+//                    commentNumber.setVisibility(View.VISIBLE);
+//                } else {
+//                    commentNumber.setVisibility(View.GONE);
+//                }
+//            }
+//            comments.setClickable(true);
+//        }
+
 
 //        @OnClick(R.id.delete)
 //        public void delete(View view) {
