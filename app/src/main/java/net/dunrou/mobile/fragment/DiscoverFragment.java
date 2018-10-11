@@ -1,5 +1,6 @@
 package net.dunrou.mobile.fragment;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.app.Fragment;
 import android.app.SearchManager;
@@ -83,7 +84,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
 
     private BluetoothAdapter mBluetoothAdapter;
     private Set<BluetoothDevice> pairedDevices;
-    private ArrayList<BluetoothDevice> mDiscoverableDevices = new ArrayList<>();
+    private ArrayList<BluetoothDevice> mDiscoverableDevices;
     private BluetoothHeadset mBluetoothHeadset;
 
     private BluetoothDeviceAdapter  mBluetoothDeviceAdapter;
@@ -123,7 +124,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
             if(BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
-                Log.d(TAG, "get device: " + device.getName() + " " + device.getAddress() + " " + device.getUuids());
+//                Log.d(TAG, "get device: " + device.getName() + " " + device.getAddress() + " " + device.getUuids());
                 try {
                     if(device.getName().split(",")[0].equals(MY_UUID.toString())) {
                         for(BluetoothDevice d: mDiscoverableDevices) {
@@ -134,6 +135,8 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
                         if(!isExisted)
                         {
                             mDiscoverableDevices.add(device);
+                            Log.d(TAG, "get out phones: " + device.getName());
+                            Log.d(TAG, "get out phones, list size: " + mDiscoverableDevices.size());
                             mBluetoothDeviceAdapter.setBluetoothDevices(mDiscoverableDevices);
                         }
                     }
@@ -157,6 +160,8 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate called");
+        mDiscoverableDevices = new ArrayList<>();
+
         mContext = this.getActivity();
         EventBus.getDefault().register(this);
 
@@ -181,34 +186,17 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     public void onResume() {
         super.onResume();
         setupNearby();
-
-//        Log.d(TAG, "onResume called");
-//        switch(mDiscoverUserAdapter.getSuggestMode()) {
-//            case DiscoverUserAdapter.TOP:
-//                setupTop();
-//                break;
-//            case DiscoverUserAdapter.COMMON_FRIENDS:
-//                setupPeople();
-//                break;
-//            case DiscoverUserAdapter.INRANGE:
-//                setupNearby();
-//                break;
-//        }
     }
 
     @Override
     public void onStop() {
         super.onStop();
-//        if (mDiscoverUserAdapter.getSuggestMode() == DiscoverUserAdapter.INRANGE)
-//            stopDiscoverDevices();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         EventBus.getDefault().unregister(this);
-        mBluetoothAdapter.disable();
-//        stopDiscoverDevices();
     }
 
     @Override
@@ -369,6 +357,8 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
         mPermissions_list.add(android.Manifest.permission.ACCESS_COARSE_LOCATION);
         mPermissions_list.add(android.Manifest.permission.BLUETOOTH);
         mPermissions_list.add(android.Manifest.permission.BLUETOOTH_ADMIN);
+        mPermissions_list.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        mPermissions_list.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         mPermissions_array = new String[mPermissions_list.size()];
 
@@ -378,7 +368,9 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
 
     public void setupBT() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        mBluetoothAdapter.setName(MY_UUID.toString() + "," + mBluetoothAdapter.getName());
+        if(!mBluetoothAdapter.getName().split(",")[0].equals(MY_UUID.toString()))
+            mBluetoothAdapter.setName(MY_UUID.toString() + "," + mBluetoothAdapter.getName());
+        Log.d(TAG, "set name to : " + mBluetoothAdapter.getName());
 
 
         if(mBluetoothAdapter == null) {

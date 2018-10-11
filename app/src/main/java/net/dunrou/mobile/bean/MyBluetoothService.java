@@ -101,6 +101,7 @@ public class MyBluetoothService {
 //                    keepRunning = false;
                 } catch (IOException e) {
                     e.printStackTrace();
+                    keepRunning = false;
                 }
 
 

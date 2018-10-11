@@ -45,7 +45,6 @@ public class BluetoothDeviceAdapter extends RecyclerView.Adapter<BluetoothDevice
     public void onBindViewHolder(BTDeviceViewHolder holder, int position) {
         BluetoothDevice bluetoothDevice = mBluetoothDevices.get(position);
         initializeHolderView(holder, bluetoothDevice);
-
         initializeConnectLogic(holder, bluetoothDevice);
     }
 
@@ -57,6 +56,7 @@ public class BluetoothDeviceAdapter extends RecyclerView.Adapter<BluetoothDevice
 
     public void setBluetoothDevices(ArrayList<BluetoothDevice> bluetoothDevices) {
         this.mBluetoothDevices = bluetoothDevices;
+        Log.d(TAG, "setBluetoothDevices called, devices number: " + this.mBluetoothDevices.size());
         notifyDataSetChanged();
     }
 
