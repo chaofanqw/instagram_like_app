@@ -348,7 +348,7 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
     public void updateMyComment() {
         ArrayList<String> allFollowing = new ArrayList<>();
         for (FirebaseRelationship fp : allRelationships) {
-            if (fp.getFollower().equals(currentUser))
+            if (fp.getFollower().equals(currentUser) && fp.getStatus())
                 allFollowing.add(fp.getFollowee());
         }
 
