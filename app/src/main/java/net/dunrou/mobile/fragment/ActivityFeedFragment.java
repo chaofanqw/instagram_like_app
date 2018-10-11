@@ -42,6 +42,7 @@ public class ActivityFeedFragment extends Fragment {
     private TabLayout.Tab follow;
     private TabLayout.Tab like;
     private TabLayout.Tab activities;
+    private TabLayout.Tab comment;
 
     public ActivityFeedFragment() {
         // Required empty public constructor
@@ -85,6 +86,7 @@ public class ActivityFeedFragment extends Fragment {
         follow = tabLayout.getTabAt(0);
         like = tabLayout.getTabAt(1);
         activities = tabLayout.getTabAt(2);
+        comment = tabLayout.getTabAt(3);
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -98,6 +100,9 @@ public class ActivityFeedFragment extends Fragment {
                         break;
                     case 2:
                         afAdapter.setMode(afAdapter.ACTIVITIES);
+                        break;
+                    case 3:
+                        afAdapter.setMode(afAdapter.COMMENTS);
                         break;
                 }
             }
@@ -209,6 +214,36 @@ public class ActivityFeedFragment extends Fragment {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onRemovePosts(ActivityFeedMessage.LikeRemovedEvent newLike) {
         afAdapter.removeLike(newLike.getLike());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onAddComments(ActivityFeedMessage.CommentAddedEvent newLike) {
+        afAdapter.addComments(newLike.getPost());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onChangeComments(ActivityFeedMessage.CommentChangedEvent newLike) {
+        afAdapter.updateComments(newLike.getPost());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onRemoveComments(ActivityFeedMessage.CommentRemovedEvent newLike) {
+        afAdapter.removeComment(newLike.getPost());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onAddAllPosts(ActivityFeedMessage.AllPostAddedEvent newPost) {
+        afAdapter.addAllPost(newPost.getPost());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onChangeAllPosts(ActivityFeedMessage.AllPostChangedEvent newPost) {
+        afAdapter.updateAllPost(newPost.getPost());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onRemoveAllPosts(ActivityFeedMessage.AllPostRemovedEvent newPost) {
+        afAdapter.removeAllPost(newPost.getPost());
     }
 
 }

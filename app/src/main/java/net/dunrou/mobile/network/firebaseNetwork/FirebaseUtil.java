@@ -1065,5 +1065,90 @@ public class FirebaseUtil {
         });
     }
 
+    public void getAllCommentsForActivityFeed(){
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("comment");
+
+        Query query = myRef.orderByChild("userId");
+        query.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseEventComment comment = new FirebaseEventComment();
+                comment.fromMap(result);
+                EventBus.getDefault().post(new ActivityFeedMessage.CommentAddedEvent(comment));
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseEventComment comment = new FirebaseEventComment();
+                comment.fromMap(result);
+                EventBus.getDefault().post(new ActivityFeedMessage.CommentChangedEvent(comment));
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseEventComment comment = new FirebaseEventComment();
+                comment.fromMap(result);
+                EventBus.getDefault().post(new ActivityFeedMessage.CommentRemovedEvent(comment));
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d("result", "ChildEventListener onCancelled: error");
+            }
+        });
+    }
+
+    public void getAllPostsForActivityFeed(){
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("event-post");
+
+        Query query = myRef.orderByChild("userId");
+        query.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseEventPost post = new FirebaseEventPost();
+                post.fromMap(result);
+                EventBus.getDefault().post(new ActivityFeedMessage.AllPostAddedEvent(post));
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseEventPost post = new FirebaseEventPost();
+                post.fromMap(result);
+
+                EventBus.getDefault().post(new ActivityFeedMessage.AllPostChangedEvent(post));
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                HashMap<String, Object> result = (HashMap<String, Object>) dataSnapshot.getValue();
+                FirebaseEventPost post = new FirebaseEventPost();
+                post.fromMap(result);
+                EventBus.getDefault().post(new ActivityFeedMessage.AllPostRemovedEvent(post));
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d("result", "ChildEventListener onCancelled: error");
+            }
+        });
+    }
+
 
 }
