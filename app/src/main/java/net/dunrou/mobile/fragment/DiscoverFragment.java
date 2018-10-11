@@ -191,6 +191,7 @@ public class DiscoverFragment extends Fragment implements SearchView.OnQueryText
     @Override
     public void onStop() {
         super.onStop();
+        stopDiscoverDevices();
     }
 
     @Override
