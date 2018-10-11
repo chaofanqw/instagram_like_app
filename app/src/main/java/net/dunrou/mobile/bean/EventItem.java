@@ -4,6 +4,7 @@ import net.dunrou.mobile.base.firebaseClass.FirebaseEventComment;
 import net.dunrou.mobile.base.firebaseClass.FirebaseEventPost;
 
 import java.io.Serializable;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,8 @@ public class EventItem implements Serializable {
     public List<EventComment> feedReplies;  //回复列表内容
     public int likeCount;
     public boolean selfLike;
+    public List<String> followeeLike;
+    public float distance;
 
     public EventItem(FirebaseEventPost eventPost) {
         this.eventPostId = eventPost.getEventPostId();
@@ -27,12 +30,13 @@ public class EventItem implements Serializable {
         }
         //this.avatar = avatar;
         this.content = eventPost.getComment();
-        this.createTime = new SimpleDateFormat("dd-MM, hh:mm").format(eventPost.getTime());
+//        this.createTime = SimpleDateFormat.getDateTimeInstance(Y).format(eventPost.getTime());
+        this.createTime = SimpleDateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(eventPost.getTime());
         this.userId = eventPost.getUserId();
         //this.feedReplies = feedReplies;
     }
 
-    public EventItem(String avatar, FirebaseEventPost eventPost, int likeCount, ArrayList<FirebaseEventComment> postReply, boolean selfLike) {
+    public EventItem(String avatar, FirebaseEventPost eventPost, int likeCount, ArrayList<FirebaseEventComment> postReply, boolean selfLike, ArrayList<String> followeeLike, float distance) {
         if (!avatar.equals("0")) {
             this.avatar = new Avatar(avatar);
         }
@@ -44,7 +48,8 @@ public class EventItem implements Serializable {
         if (!eventPost.getComment().trim().equals("")) {
             this.content = eventPost.getComment();
         }
-        this.createTime = new SimpleDateFormat("dd-MM, hh:mm").format(eventPost.getTime());
+        this.createTime = SimpleDateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(eventPost.getTime());
+//        this.createTime = new SimpleDateFormat("dd-MM, hh:mm").format(eventPost.getTime());
         this.userId = eventPost.getUserId();
         this.likeCount = likeCount;
         this.selfLike = selfLike;
@@ -54,6 +59,8 @@ public class EventItem implements Serializable {
                 feedReplies.add(new EventComment(comment));
             }
         }
+        this.followeeLike = followeeLike;
+        this.distance = distance;
     }
 
     public List<EventPic> getAttachments() {

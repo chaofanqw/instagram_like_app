@@ -61,9 +61,10 @@ public class ProfileFragment extends Fragment {
 
     }
 
-    public static ProfileFragment newInstance() {
+    public static ProfileFragment newInstance(String username) {
         ProfileFragment fragment = new ProfileFragment();
         Bundle args = new Bundle();
+        args.putString("username", username);
         fragment.setArguments(args);
         return fragment;
     }
@@ -87,6 +88,10 @@ public class ProfileFragment extends Fragment {
         // Inflate the layout for this fragment
         profileView = inflater.inflate(R.layout.fragment_profile, container, false);
 
+        Bundle bundle = getArguments();
+        if (bundle != null)
+            currentUser = bundle.getString("username");
+
         initializeProfileUser();
         initializeProfileLayout();
         initializeAdapter();
@@ -94,13 +99,12 @@ public class ProfileFragment extends Fragment {
         new FirebaseUtil().getUserProfile(userProfile);
         new FirebaseUtil().getProfileStats(userProfile);
         new FirebaseUtil().getPostStats(userProfile);
-        new FirebaseUtil().getAllMyPostsForProfile(MainActivity.CURRENT_USERID);
+        new FirebaseUtil().getAllMyPostsForProfile(currentUser);
 
         return profileView;
     }
 
     public void initializeProfileUser() {
-        currentUser = MainActivity.CURRENT_USERID;
         userProfile = new FirebaseUser(currentUser, null);
 
     }

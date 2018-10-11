@@ -20,6 +20,7 @@ import net.dunrou.mobile.network.firebaseNetwork.FirebaseUtil;
 
 import org.w3c.dom.Text;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -55,7 +56,7 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.PhotoAdapter
         FirebaseEventPost tempPost = myPosts.get(getItemCount() - 1 - position);
 
         holder.comment.setText(tempPost.getComment());
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        DateFormat dateFormat = SimpleDateFormat.getDateInstance();
         holder.time.setText(dateFormat.format(tempPost.getTime()));
 
         Picasso.with(paContext).load(tempPost.getPhotos().get(0)).fit().into(holder.photo1);

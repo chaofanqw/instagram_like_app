@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">mobile</string>
+    <string name="app_name">Social</string>
     <string name="title_activity_login">Sign in</string>
 
     <!-- Strings related to login -->

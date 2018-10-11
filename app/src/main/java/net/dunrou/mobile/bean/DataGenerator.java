@@ -28,13 +28,13 @@ public class DataGenerator {
                                                             R.drawable.profile_p};
     public static final String []mTabTitle = new String[]{"User Feed","Discover","Upload photo","Activity Feed","Profile"};
 
-    public static Fragment[] getFragments(String from){
+    public static Fragment[] getFragments(String username){
         Fragment fragments[] = new Fragment[5];
         fragments[0] = HomeFragment.newInstance();
         fragments[1] = DiscoverFragment.newInstance();
         fragments[2] = null;
         fragments[3] = ActivityFeedFragment.newInstance();
-        fragments[4] = ProfileFragment.newInstance();
+        fragments[4] = ProfileFragment.newInstance(username);
         return fragments;
     }
 
