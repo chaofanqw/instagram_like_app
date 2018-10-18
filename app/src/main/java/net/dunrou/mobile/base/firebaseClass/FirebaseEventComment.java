@@ -53,6 +53,18 @@ public class FirebaseEventComment {
         return result;
     }
 
+    public void fromMap(HashMap<String, Object> result){
+        this.eventCommentId = (String) result.get("eventCommentId");
+        this.userId = (String) result.get("userID");
+        this.eventPostId = (String) result.get("eventPostId");
+        this.comment = (String) result.get("comment");
+
+        Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").create();
+        this.time = gson.fromJson((String) result.get("time"), Date.class);
+
+
+    }
+
     public String getEventCommentId() {
         return eventCommentId;
     }

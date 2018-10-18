@@ -1,6 +1,7 @@
 package net.dunrou.mobile.base.message;
 
 
+import net.dunrou.mobile.base.firebaseClass.FirebaseEventComment;
 import net.dunrou.mobile.base.firebaseClass.FirebaseEventLike;
 import net.dunrou.mobile.base.firebaseClass.FirebaseEventPost;
 import net.dunrou.mobile.base.firebaseClass.FirebaseRelationship;
@@ -119,6 +120,45 @@ public class ActivityFeedMessage {
         }
     }
 
+    public static class AllPostAddedEvent {
+
+        private final FirebaseEventPost newPost;
+
+        public AllPostAddedEvent(FirebaseEventPost newPost) {
+            this.newPost = newPost;
+        }
+
+        public FirebaseEventPost getPost() {
+            return newPost;
+        }
+    }
+
+    public static class AllPostChangedEvent {
+
+        private final FirebaseEventPost newPost;
+
+        public AllPostChangedEvent(FirebaseEventPost newPost) {
+            this.newPost = newPost;
+        }
+
+        public FirebaseEventPost getPost() {
+            return newPost;
+        }
+    }
+
+    public static class AllPostRemovedEvent {
+
+        private final FirebaseEventPost newPost;
+
+        public AllPostRemovedEvent(FirebaseEventPost newPost) {
+            this.newPost = newPost;
+        }
+
+        public FirebaseEventPost getPost() {
+            return newPost;
+        }
+    }
+
     public static class LikeAddedEvent {
 
         private final FirebaseEventLike newLike;
@@ -155,6 +195,45 @@ public class ActivityFeedMessage {
 
         public FirebaseEventLike getLike() {
             return newLike;
+        }
+    }
+
+    public static class CommentAddedEvent {
+
+        private final FirebaseEventComment newPost;
+
+        public CommentAddedEvent(FirebaseEventComment newPost) {
+            this.newPost = newPost;
+        }
+
+        public FirebaseEventComment getPost() {
+            return newPost;
+        }
+    }
+
+    public static class CommentChangedEvent {
+
+        private final FirebaseEventComment newPost;
+
+        public CommentChangedEvent(FirebaseEventComment newPost) {
+            this.newPost = newPost;
+        }
+
+        public FirebaseEventComment getPost() {
+            return newPost;
+        }
+    }
+
+    public static class CommentRemovedEvent {
+
+        private final FirebaseEventComment newPost;
+
+        public CommentRemovedEvent(FirebaseEventComment newPost) {
+            this.newPost = newPost;
+        }
+
+        public FirebaseEventComment getPost() {
+            return newPost;
         }
     }
 

@@ -20,6 +20,7 @@ import com.squareup.picasso.Picasso;
 
 import net.dunrou.mobile.R;
 import net.dunrou.mobile.activity.MainActivity;
+import net.dunrou.mobile.base.firebaseClass.FirebaseEventComment;
 import net.dunrou.mobile.base.firebaseClass.FirebaseEventLike;
 import net.dunrou.mobile.base.firebaseClass.FirebaseEventPost;
 import net.dunrou.mobile.base.firebaseClass.FirebaseRelationship;
@@ -44,6 +45,7 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
     public static final int FOLLOW_ME = 1;
     public static final int LIKE_ME = 2;
     public static final int ACTIVITIES = 3;
+    public static final int COMMENTS = 4;
     public int currentMode = FOLLOW_ME;
 
     // Raw Data
@@ -51,13 +53,16 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
     private ArrayList<FirebaseRelationship> allRelationships;
     private ArrayList<FirebaseEventLike> allLikes;
     private ArrayList<FirebaseEventPost> allMyPosts;
+    private ArrayList<FirebaseEventComment> showComments;
+    private ArrayList<FirebaseEventPost> allPosts;
+
 
     // Real time Data
     private ArrayList<FirebaseRelationship> allFollowMe;
     private ArrayList<FirebaseEventLike> allLikeMe;
     private ArrayList<FirebaseRelationship> followingActivities;
+    private ArrayList<FirebaseEventComment> myComments;
 
-    private ArrayList<FirebaseRelationship> fakeUsers;
 
     public ActivityFeedAdapter(Context context) {
         adapterContext = context;
@@ -67,16 +72,21 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
         allRelationships = new ArrayList<>();
         allLikes = new ArrayList<>();
         allMyPosts = new ArrayList<>();
+        allPosts = new ArrayList<>();
+        showComments = new ArrayList<>();
 
         allFollowMe = new ArrayList<>();
         allLikeMe = new ArrayList<>();
         followingActivities = new ArrayList<>();
+        myComments = new ArrayList<>();
 
 
         new FirebaseUtil().getAllUsersData();
         new FirebaseUtil().getAllRelationshipData();
         new FirebaseUtil().getAllMyPostsForActivityFeed(currentUser);
         new FirebaseUtil().getLikeData();
+        new FirebaseUtil().getAllCommentsForActivityFeed();
+        new FirebaseUtil().getAllPostsForActivityFeed();
 
     }
 
@@ -121,6 +131,7 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
                 holder.photoLike.setVisibility(View.GONE);
                 holder.followeeName.setVisibility(View.VISIBLE);
                 holder.followeePhoto.setVisibility(View.VISIBLE);
+                holder.comment.setVisibility(View.GONE);
                 break;
 
 
@@ -156,6 +167,7 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
 
                 holder.photoLike.setVisibility(View.VISIBLE);
                 holder.followeePhoto.setVisibility(View.GONE);
+                holder.comment.setVisibility(View.GONE);
 
 
                 break;
@@ -189,6 +201,40 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
                 holder.photoLike.setVisibility(View.GONE);
                 holder.followeeName.setVisibility(View.VISIBLE);
                 holder.followeePhoto.setVisibility(View.VISIBLE);
+                holder.comment.setVisibility(View.GONE);
+                break;
+
+            case COMMENTS:
+                holder.followeeName.setVisibility(View.INVISIBLE);
+                holder.followeePhoto.setVisibility(View.INVISIBLE);
+                holder.comment.setVisibility(View.VISIBLE);
+                FirebaseEventComment tempComment = myComments.get(getItemCount() - 1 - position);
+                holder.doing.setText("leaves a comment on");
+
+
+                String uriPhoto = getPhotoURI(tempComment.getUserId());
+                if (uriPhoto.equals("")) {
+                    holder.followerPhoto.setImageResource(R.drawable.profile_p);
+                } else {
+                    Picasso.with(adapterContext).load(uriPhoto).fit().into(holder.followerPhoto);
+                }
+
+                FirebaseEventPost commentPost = getOriginPost(tempComment.getEventPostId());
+                holder.photoLike.setVisibility(View.VISIBLE);
+                int numPhotos = commentPost.getPhotos().size();
+
+                if (numPhotos >1){
+                    holder.followeeName.setVisibility(View.VISIBLE);
+                    holder.followeeName.setText("...");
+
+                }
+                Picasso.with(adapterContext).load(commentPost.getPhotos().get(0)).fit().into(holder.photoLike);
+
+                holder.comment.setText(tempComment.getComment());
+                holder.followerName.setText(tempComment.getUserId());
+                holder.time.setText(dateFormat.format(tempComment.getTime()));
+
+
                 break;
         }
     }
@@ -202,9 +248,11 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
                 return allLikeMe.size();
             case ACTIVITIES:
                 return followingActivities.size();
+            case COMMENTS:
+                return myComments.size();
         }
 
-        return fakeUsers.size();
+        return 0;
     }
 
     public String getPhotoURI(String userID) {
@@ -221,7 +269,7 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
     }
 
     public FirebaseEventPost getOriginPost(String postId){
-        for (FirebaseEventPost fp : allMyPosts){
+        for (FirebaseEventPost fp : allPosts){
             if (fp.getEventPostId().equals(postId)){
                 return fp;
             }
@@ -234,7 +282,7 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
         updateFollowMe();
         updateFollowingActivities();
         updateLikeMe();
-
+        updateMyComment();
         notifyDataSetChanged();
     }
 
@@ -297,6 +345,23 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
 
     }
 
+    public void updateMyComment() {
+        ArrayList<String> allFollowing = new ArrayList<>();
+        for (FirebaseRelationship fp : allRelationships) {
+            if (fp.getFollower().equals(currentUser) && fp.getStatus())
+                allFollowing.add(fp.getFollowee());
+        }
+
+        ArrayList<FirebaseEventComment> targets = new ArrayList<>();
+        for (FirebaseEventComment fl : showComments) {
+            if (allFollowing.contains(fl.getUserId())) {
+                targets.add(fl);
+            }
+        }
+        myComments = targets;
+
+    }
+
     // Operations for ArrayList allUsers
     public void addUser(FirebaseUser user) {
         this.allUsers.add(user);
@@ -349,27 +414,27 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
     }
 
     // Operations for ArrayList allMyPosts
-    public void addPost(FirebaseEventPost post) {
-        this.allMyPosts.add(post);
+    public void addComments(FirebaseEventComment comment) {
+        this.showComments.add(comment);
         updateData();
     }
 
-    public void updatePost(FirebaseEventPost post) {
-        for (int i = 0; i < allMyPosts.size(); i++) {
-            if (allMyPosts.get(i).getEventPostId().equals(post.getEventPostId())) {
-                allMyPosts.set(i, post);
+    public void updateComments(FirebaseEventComment comment) {
+        for (int i = 0; i < showComments.size(); i++) {
+            if (showComments.get(i).getEventCommentId().equals(comment.getEventCommentId())) {
+                showComments.set(i, comment);
             }
         }
         updateData();
     }
 
-    public void removePost(FirebaseEventPost post) {
-        ArrayList<FirebaseEventPost> targets = new ArrayList<>();
-        for (FirebaseEventPost fu : allMyPosts) {
-            if (!fu.getEventPostId().equals(post.getEventPostId()))
+    public void removeComment(FirebaseEventComment comment) {
+        ArrayList<FirebaseEventComment> targets = new ArrayList<>();
+        for (FirebaseEventComment fu : showComments) {
+            if (!fu.getEventCommentId().equals(comment.getEventCommentId()))
                 targets.add(fu);
         }
-        allMyPosts = targets;
+        showComments = targets;
         updateData();
     }
 
@@ -398,6 +463,56 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
         updateData();
     }
 
+    // Operations for ArrayList allMyPosts
+    public void addPost(FirebaseEventPost post) {
+        this.allMyPosts.add(post);
+        updateData();
+    }
+
+    public void updatePost(FirebaseEventPost post) {
+        for (int i = 0; i < allMyPosts.size(); i++) {
+            if (allMyPosts.get(i).getEventPostId().equals(post.getEventPostId())) {
+                allMyPosts.set(i, post);
+            }
+        }
+        updateData();
+    }
+
+    public void removePost(FirebaseEventPost post) {
+        ArrayList<FirebaseEventPost> targets = new ArrayList<>();
+        for (FirebaseEventPost fu : allMyPosts) {
+            if (!fu.getEventPostId().equals(post.getEventPostId()))
+                targets.add(fu);
+        }
+        allMyPosts = targets;
+        updateData();
+    }
+
+    // Operations for ArrayList allMyPosts
+    public void addAllPost(FirebaseEventPost post) {
+        this.allPosts.add(post);
+        updateData();
+    }
+
+    public void updateAllPost(FirebaseEventPost post) {
+        for (int i = 0; i < allPosts.size(); i++) {
+            if (allPosts.get(i).getEventPostId().equals(post.getEventPostId())) {
+                allPosts.set(i, post);
+            }
+        }
+        updateData();
+    }
+
+    public void removeAllPost(FirebaseEventPost post) {
+        ArrayList<FirebaseEventPost> targets = new ArrayList<>();
+        for (FirebaseEventPost fu : allPosts) {
+            if (!fu.getEventPostId().equals(post.getEventPostId()))
+                targets.add(fu);
+        }
+        allPosts = targets;
+        updateData();
+    }
+
     // ViewHolder
     public static class ActivityFeedViewHolder extends RecyclerView.ViewHolder {
         private final ImageView followerPhoto;
@@ -410,6 +525,7 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
         private final ImageView photoLike;
 
         private final TextView time;
+        private final TextView comment;
 
 
         public ActivityFeedViewHolder(View itemView) {
@@ -424,6 +540,7 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
             photoLike = itemView.findViewById(R.id.photo);
 
             time = itemView.findViewById(R.id.time);
+            comment = itemView.findViewById(R.id.comment);
 
         }
     }
