@@ -209,7 +209,7 @@ public class ActivityFeedAdapter extends RecyclerView.Adapter<ActivityFeedAdapte
                 holder.followeePhoto.setVisibility(View.INVISIBLE);
                 holder.comment.setVisibility(View.VISIBLE);
                 FirebaseEventComment tempComment = myComments.get(getItemCount() - 1 - position);
-                holder.doing.setText("leaves a comment on");
+                holder.doing.setText("comments");
 
 
                 String uriPhoto = getPhotoURI(tempComment.getUserId());
